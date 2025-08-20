@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Save, Copy, Wand2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Copy, Wand2, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -257,6 +257,37 @@ Write as one continuous, engaging script without section labels or formatting. M
         variant: "destructive"
       });
     }
+  };
+
+  const handleStartAgain = () => {
+    setWizardData({
+      businessName: "",
+      brandVoice: "",
+      offer: "",
+      primaryBenefit: "",
+      audience: "",
+      customAudience: "",
+      painPoint: "",
+      outcome: "",
+      proofPoint: "",
+      cta: "",
+      platform: "",
+      length: "",
+      geoTargeting: "",
+      keywords: "",
+      avatarGender: "",
+      avatarAge: "",
+      attire: "",
+      setting: "",
+      noAvatar: false
+    });
+    setCurrentStep(1);
+    setGeneratedContent(null);
+    setGeneratedScript("");
+    localStorage.removeItem('adWizardDraft');
+    toast({
+      title: "Wizard reset successfully"
+    });
   };
   const renderStep = () => {
     // Show templates overlay if requested
@@ -588,6 +619,10 @@ Write as one continuous, engaging script without section labels or formatting. M
                       <Button variant="outline" onClick={saveDraft}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Draft
+                      </Button>
+                      <Button variant="outline" onClick={handleStartAgain}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Start Again
                       </Button>
                     </div>
                   </CardContent>
