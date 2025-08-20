@@ -142,12 +142,22 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
 
   const generatePrompts = () => {
     const finalAudience = wizardData.audience === 'Custom' ? wizardData.customAudience : wizardData.audience;
-    const scriptPrompt = `Write a ${wizardData.length} ${wizardData.platform} performance-ad video script for ${wizardData.businessName}.
-Structure: HOOK (first 3s) → BODY (pain relief + ${wizardData.primaryBenefit}) → CTA ("${wizardData.cta}").
-Tone: ${wizardData.brandVoice}. Offer: ${wizardData.offer}. Audience: ${finalAudience}. Pain: ${wizardData.painPoint}.
-After-state: ${wizardData.outcome}. Proof: ${wizardData.proofPoint}. Geo: ${wizardData.geoTargeting}. Must-include: ${wizardData.keywords}.
-Keep within ${wizardData.length.replace('s', '')}s, plain language, 2–3 short sentences per section, captions-friendly punctuation.
-Return as a single paragraph script.`;
+    const duration = parseInt(wizardData.length.replace('s', ''));
+    const scriptPrompt = `You are an expert direct-response copywriter creating a high-converting ${wizardData.length} video ad script for ${wizardData.businessName}.
+
+TARGET: ${finalAudience} who are struggling with: ${wizardData.painPoint}
+SOLUTION: ${wizardData.offer} that delivers: ${wizardData.outcome}
+TONE: ${wizardData.brandVoice}
+PROOF: ${wizardData.proofPoint}
+LOCATION: ${wizardData.geoTargeting}
+KEYWORDS TO INCLUDE: ${wizardData.keywords}
+CALL TO ACTION: ${wizardData.cta}
+
+Create a smooth, natural-flowing ${duration}-second video script that feels conversational and authentic. The script should grab attention immediately, clearly present the problem and solution, include credibility elements, and end with a strong call to action. 
+
+CRITICAL TIMING: This must be exactly ${duration} seconds when read at normal speaking pace (approximately 2.5 words per second, so ${duration * 2.5} words total). Count your words carefully.
+
+Write as one continuous, engaging script without section labels or formatting. Make it sound like a real person talking directly to the viewer, not like marketing copy.`;
 
     const captionsPayload = {
       script: generatedScript || "Generated script will appear here",
@@ -618,7 +628,7 @@ Return as a single paragraph script.`;
                     <div className="bg-muted p-4 rounded-lg text-sm max-h-40 overflow-y-auto break-words">
                       <pre className="whitespace-pre-wrap">{JSON.stringify(generatedContent.captionsPayload, null, 2)}</pre>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2 pt-4">
                       <Button onClick={handleCreateVideo}>
                         Create with Captions AI
                       </Button>
@@ -671,7 +681,7 @@ Return as a single paragraph script.`;
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2">
             <DialogTitle>Ad Wizard - {stepTitles[currentStep - 1]}</DialogTitle>
             <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
               Templates ({templates.length})
