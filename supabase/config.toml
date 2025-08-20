@@ -1,4 +1,4 @@
 project_id = "wcrdnljoxscotvuxsczd"
 
-[functions.captions-webhook]
-verify_jwt = false
+[functions.check-pending-jobs]
+verify_jwt = true

@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Play, RefreshCw, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import AdWizardModal from "@/components/AdWizardModal";
+import { Plus, Play, Download, RotateCcw, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
 interface VideoJob {
   id: string;
@@ -25,11 +26,10 @@ interface VideoJob {
 const Library = () => {
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pollingJobs, setPollingJobs] = useState<Set<string>>(new Set());
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const { toast } = useToast();
 
-  // Load video jobs
-  const loadVideoJobs = async () => {
+  const loadVideoJobs = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('video_jobs')
@@ -39,9 +39,9 @@ const Library = () => {
       if (error) {
         console.error('Error loading video jobs:', error);
         toast({
-          title: "Error loading library",
-          description: error.message,
-          variant: "destructive"
+          title: "Error",
+          description: "Failed to load videos. Please try again.",
+          variant: "destructive",
         });
         return;
       }
@@ -51,100 +51,58 @@ const Library = () => {
         status: job.status as 'queued' | 'processing' | 'ready' | 'failed'
       })) || []);
     } catch (error) {
-      console.error('Error loading video jobs:', error);
+      console.error('Error in loadVideoJobs:', error);
       toast({
-        title: "Error loading library",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to load videos. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Poll jobs that are in progress
-  useEffect(() => {
-    const activeJobs = videoJobs.filter(job => 
-      job.status === 'queued' || job.status === 'processing'
-    );
-
-    if (activeJobs.length === 0) return;
-
-    const interval = setInterval(async () => {
-      for (const job of activeJobs) {
-        if (pollingJobs.has(job.job_id)) continue;
-        
-        setPollingJobs(prev => new Set(prev).add(job.job_id));
-        
-        try {
-          const response = await fetch(
-            `https://wcrdnljoxscotvuxsczd.supabase.co/functions/v1/check-video-status?job_id=${job.job_id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-              }
-            }
-          );
-
-          if (response.ok) {
-            const statusData = await response.json();
-            
-            setVideoJobs(prev => prev.map(j => 
-              j.job_id === job.job_id 
-                ? { 
-                    ...j, 
-                    status: statusData.status,
-                    video_url: statusData.video_url,
-                    thumbnail_url: statusData.thumbnail_url,
-                    duration: statusData.duration,
-                    error_message: statusData.error_message
-                  }
-                : j
-            ));
-
-            // If job is completed, show toast
-            if (statusData.status === 'ready') {
-              toast({
-                title: "Video ready!",
-                description: `${job.title} has finished rendering.`
-              });
-            } else if (statusData.status === 'failed') {
-              toast({
-                title: "Video failed",
-                description: `${job.title} failed to render.`,
-                variant: "destructive"
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-        } finally {
-          setPollingJobs(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(job.job_id);
-            return newSet;
-          });
-        }
+  const checkPendingJobs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('check-pending-jobs');
+      
+      if (error) {
+        console.error('Error checking pending jobs:', error);
+        return;
       }
-    }, 10000); // Poll every 10 seconds
 
-    return () => clearInterval(interval);
-  }, [videoJobs, pollingJobs, toast]);
+      console.log('Checked pending jobs:', data);
+      
+      // Reload the list after checking
+      await loadVideoJobs();
+    } catch (error) {
+      console.error('Error in checkPendingJobs:', error);
+    }
+  }, [loadVideoJobs]);
 
-  // Load jobs on mount
+  // Load video jobs on component mount and check pending jobs
   useEffect(() => {
-    loadVideoJobs();
-  }, []);
+    const initializeLibrary = async () => {
+      await checkPendingJobs();
+      await loadVideoJobs();
+    };
+    
+    initializeLibrary();
+  }, [loadVideoJobs, checkPendingJobs]);
 
   // Retry failed job
   const retryJob = async (job: VideoJob) => {
     try {
-      // Extract script from the stored captions_payload
-      const script = job.captions_payload?.script || "No script available";
+      // Use the stored captions_payload for retry
+      const captionsPayload = job.captions_payload || {
+        script: "No script available",
+        duration_sec: 30,
+        aspect_ratio: "1:1"
+      };
       
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: {
-          wizardData: job.wizard_data,
-          script: script,
+          captionsPayload,
           title: job.title
         }
       });
@@ -159,7 +117,7 @@ const Library = () => {
       });
 
       // Refresh the library
-      loadVideoJobs();
+      await loadVideoJobs();
     } catch (error) {
       console.error('Retry error:', error);
       toast({
@@ -229,9 +187,30 @@ const Library = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Videos</h1>
-          <div className="text-muted-foreground">{videoJobs.length} items</div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Videos</h1>
+            <p className="text-muted-foreground mt-1">
+              {videoJobs.length} items
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={checkPendingJobs}
+              variant="outline"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+            <Button 
+              onClick={() => setIsWizardOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Ad
+            </Button>
+          </div>
         </div>
 
         {videoJobs.length === 0 ? (
@@ -240,7 +219,7 @@ const Library = () => {
             <p className="text-muted-foreground mb-4">
               Create your first video using the Ad Wizard
             </p>
-            <Button onClick={() => window.location.href = '/app'}>
+            <Button onClick={() => setIsWizardOpen(true)}>
               Create Ad
             </Button>
           </div>
@@ -364,6 +343,11 @@ const Library = () => {
           </div>
         )}
       </div>
+
+      <AdWizardModal 
+        open={isWizardOpen} 
+        onOpenChange={setIsWizardOpen} 
+      />
     </div>
   );
 };

@@ -34,61 +34,84 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { wizardData, script, title } = await req.json();
+    const { captionsPayload, title } = await req.json();
+    const script = captionsPayload?.script?.trim() || "";
 
     console.log('Creating video job for user:', user.id);
     console.log('Script to submit:', script);
 
-    // Get Captions.ai API key
+    // Validate script is filled, not a template
+    if (!script) {
+      throw new Error('Script is required');
+    }
+
+    const looksLikeTemplate = /(\{\{.*\}\}|\{.*\}|<<.*>>|\[.*\])/.test(script);
+    if (looksLikeTemplate) {
+      throw new Error('Template detected. Use FILLED script, not placeholders.');
+    }
+
+    // Get Captions.ai API configuration
     const captionsApiKey = Deno.env.get('Captions_ai');
+    const captionsBase = Deno.env.get('CAPTIONS_API_BASE') || 'https://api.captions.ai/v1';
+    const workspaceId = Deno.env.get('CAPTIONS_WORKSPACE_ID');
+
     if (!captionsApiKey) {
       throw new Error('Captions.ai API key not configured');
     }
 
     console.log('API Key exists:', !!captionsApiKey);
-    console.log('API Key length:', captionsApiKey?.length);
-    console.log('Script length:', script?.length);
+    console.log('Script length:', script.length);
+    console.log('Base URL:', captionsBase);
 
-    // Call Captions.ai API with the new simplified endpoint
-    const captionsResponse = await fetch('https://api.captions.ai/api/creator/submit', {
+    // Build headers with correct format
+    const headers: Record<string, string> = {
+      'x-api-key': captionsApiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (workspaceId) {
+      headers['x-workspace-id'] = workspaceId;
+    }
+
+    // Call Captions.ai API with correct endpoint and headers
+    const captionsResponse = await fetch(`${captionsBase}/creator/videos`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${captionsApiKey}`, // Try with Bearer prefix
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ script }),
+      headers,
+      body: JSON.stringify(captionsPayload),
     });
 
     console.log('Response status:', captionsResponse.status);
     console.log('Response headers:', Object.fromEntries(captionsResponse.headers.entries()));
 
+    if (captionsResponse.status === 403) {
+      throw new Error('Forbidden from Captions.ai. Check x-api-key and workspace id.');
+    }
+
     if (!captionsResponse.ok) {
       const errorText = await captionsResponse.text();
       console.error('Captions.ai API error:', errorText);
-      console.error('Request headers sent:', {
-        'Authorization': `Bearer ${captionsApiKey?.substring(0, 10)}...`,
-        'Content-Type': 'application/json'
-      });
-      console.error('Request body sent:', JSON.stringify({ script }));
-      throw new Error(`Captions.ai API error: ${captionsResponse.status} - ${errorText}`);
+      console.error('Request headers sent:', headers);
+      console.error('Request body sent:', JSON.stringify(captionsPayload));
+      throw new Error(`Captions.ai error: ${captionsResponse.status} ${errorText}`);
     }
 
     const captionsData = await captionsResponse.json();
     console.log('Captions.ai response:', captionsData);
 
-    // Extract job ID from response (adjust based on actual API response structure)
+    // Extract job ID from response
     const jobId = captionsData.job_id || captionsData.id || `job_${Date.now()}`;
 
-    // Store job in database
+    // Store job in database with processing status
     const { data: videoJob, error: dbError } = await supabase
       .from('video_jobs')
       .insert({
         user_id: user.id,
         job_id: jobId,
-        title: title,
-        status: captionsData.status || 'queued',
-        wizard_data: wizardData,
-        captions_payload: { script }, // Store the script that was sent
+        title: title || 'AI Video',
+        status: 'processing',
+        wizard_data: captionsPayload,
+        captions_payload: captionsPayload,
       })
       .select()
       .single();
@@ -100,9 +123,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       job_id: jobId,
-      status: captionsData.status || 'queued',
-      video_job: videoJob,
-      captions_response: captionsData
+      video_id: videoJob.id,
+      status: 'processing'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -112,7 +134,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       error: error.message || 'Internal server error' 
     }), {
-      status: 500,
+      status: error.message?.includes('Template detected') || error.message?.includes('Script is required') ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

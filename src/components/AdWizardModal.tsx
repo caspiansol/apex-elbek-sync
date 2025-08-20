@@ -251,9 +251,29 @@ Write as one continuous, engaging script without section labels or formatting. M
     }
   };
   const handleCreateVideo = async () => {
-    try {
-      setIsGenerating(true);
+    if (!generatedScript) {
+      toast({
+        title: "Error",
+        description: "Please generate a script first.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    // Check if script contains placeholders
+    const looksLikeTemplate = /(\{\{.*\}\}|\{.*\}|<<.*>>|\[.*\])/.test(generatedScript);
+    if (looksLikeTemplate) {
+      toast({
+        title: "Template Detected",
+        description: "Switch to Filled Script to create your video. Templates cannot be used directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    try {
       // Build the title from wizard data
       const title = `${wizardData.businessName} - ${wizardData.offer}`;
 
@@ -263,21 +283,17 @@ Write as one continuous, engaging script without section labels or formatting. M
 
       // Map platform to aspect ratio
       let aspectRatio = '1:1';
-      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
+      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';
+      else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
 
-      // Map brand voice to tone
-      const toneMap: {
-        [key: string]: string;
-      } = {
-        'friendly-empathetic': 'friendly',
-        'professional-authoritative': 'professional',
-        'casual-relatable': 'casual',
-        'energetic-upbeat': 'energetic'
-      };
       const captionsPayload = {
-        script: generatedScript || "Generated script will appear here",
+        script: generatedScript,
         duration_sec: duration,
         aspect_ratio: aspectRatio,
+        style: {
+          tone: wizardData.brandVoice.toLowerCase().replace(' & ', '_').replace('-', '_'),
+          pace: 'medium'
+        },
         avatar: wizardData.noAvatar ? {
           enabled: false
         } : {
@@ -287,16 +303,12 @@ Write as one continuous, engaging script without section labels or formatting. M
           attire: wizardData.attire.toLowerCase().replace(' ', '_'),
           setting: wizardData.setting.toLowerCase().replace(' ', '_')
         },
-        style: {
-          tone: toneMap[wizardData.brandVoice] || 'friendly',
-          pace: "medium"
-        },
         captions: {
           enabled: true,
           burn_in: true
         },
         music: {
-          mood: "uplifting"
+          mood: 'uplifting'
         },
         metadata: {
           brand: wizardData.businessName,
@@ -305,39 +317,34 @@ Write as one continuous, engaging script without section labels or formatting. M
           keywords: wizardData.keywords,
           benefit: wizardData.primaryBenefit,
           platform: wizardData.platform
-        },
-        webhook_url: `https://wcrdnljoxscotvuxsczd.supabase.co/functions/v1/captions-webhook`
+        }
       };
 
-      // Call our edge function to create the video job
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('create-video-job', {
+      const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: {
-          wizardData,
-          script: generatedScript || "Generated script will appear here",
-          title
+          captionsPayload,
+          title,
         }
       });
-      if (error) {
-        console.error('Error creating video job:', error);
-        throw new Error(error.message || 'Failed to create video job');
-      }
-      console.log('Video job created:', data);
+
+      if (error) throw error;
+
       toast({
-        title: "Rendering started!",
-        description: "Your video is being created. Check the Library to see progress."
+        title: "Rendering Started!",
+        description: "Your video is being created. It'll appear in your Library.",
       });
+
+      // Reset the wizard and navigate to library
+      handleReset();
       onOpenChange(false);
-      localStorage.removeItem('adWizardDraft');
       navigate('/app/library');
+      
     } catch (error) {
-      console.error('Video creation error:', error);
+      console.error('Error creating video:', error);
       toast({
-        title: "Video creation failed",
-        description: error.message || "Please try again",
-        variant: "destructive"
+        title: "Error",
+        description: error.message || "Failed to create video. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
