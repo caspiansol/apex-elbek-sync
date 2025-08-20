@@ -293,20 +293,36 @@ const Library = () => {
                       <>
                         <Button 
                           size="sm" 
-                          onClick={() => window.open(job.video_url, '_blank')}
+                          onClick={() => {
+                            if (job.video_url?.includes('mock-video') || job.video_url?.includes('example.com')) {
+                              toast({
+                                title: "Demo Video Ready",
+                                description: "This is a demo video. In production, this would be your generated video."
+                              });
+                            } else {
+                              window.open(job.video_url, '_blank');
+                            }
+                          }}
                           className="flex-1"
                         >
                           <Play className="h-4 w-4 mr-1" />
-                          Play
+                          {job.video_url?.includes('mock-video') || job.video_url?.includes('example.com') ? 'View Demo' : 'Play'}
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = job.video_url!;
-                            a.download = `${job.title}.mp4`;
-                            a.click();
+                            if (job.video_url?.includes('mock-video') || job.video_url?.includes('example.com')) {
+                              toast({
+                                title: "Demo Mode",
+                                description: "This is a demo. In production, the video would be downloaded."
+                              });
+                            } else {
+                              const a = document.createElement('a');
+                              a.href = job.video_url!;
+                              a.download = `${job.title}.mp4`;
+                              a.click();
+                            }
                           }}
                         >
                           <Download className="h-4 w-4" />

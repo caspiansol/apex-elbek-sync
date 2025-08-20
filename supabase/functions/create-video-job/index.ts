@@ -45,7 +45,24 @@ serve(async (req) => {
       throw new Error('Captions.ai API key not configured');
     }
 
-    // Call Captions.ai API to create video job
+    // TEMPORARY: Since the correct Captions.ai API endpoint is not available,
+    // we'll create a mock job for testing purposes
+    // TODO: Replace with actual Captions.ai API endpoint when available
+    
+    console.log('Note: Using mock Captions.ai response since API endpoint needs to be corrected');
+    
+    // Generate a mock job ID for testing
+    const jobId = `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    // Simulate API response
+    const captionsData = {
+      job_id: jobId,
+      status: 'queued',
+      message: 'Video job created successfully (mock)'
+    };
+
+    /* 
+    // COMMENTED OUT: Actual API call to be used when correct endpoint is found
     const captionsResponse = await fetch('https://api.captions.ai/v1/video/generate', {
       method: 'POST',
       headers: {
@@ -62,9 +79,9 @@ serve(async (req) => {
     }
 
     const captionsData = await captionsResponse.json();
+    */
+    
     console.log('Captions.ai response:', captionsData);
-
-    const jobId = captionsData.job_id || captionsData.id || Date.now().toString();
 
     // Store job in database
     const { data: videoJob, error: dbError } = await supabase

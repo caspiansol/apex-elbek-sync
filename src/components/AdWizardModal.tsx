@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -742,6 +742,9 @@ Write as one continuous, engaging script without section labels or formatting. M
               Templates ({templates.length})
             </Button>
           </div>
+          <DialogDescription>
+            Step {currentStep} of {totalSteps}: Complete the form below to generate your AI-powered marketing video.
+          </DialogDescription>
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Step {currentStep} of {totalSteps}</span>

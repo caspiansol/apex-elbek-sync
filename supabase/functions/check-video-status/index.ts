@@ -74,6 +74,60 @@ serve(async (req) => {
       throw new Error('Captions.ai API key not configured');
     }
 
+    // TEMPORARY: Mock implementation for testing
+    // Since the actual Captions.ai API endpoint is not available
+    
+    if (jobId.startsWith('mock_')) {
+      console.log('Handling mock job status check for:', jobId);
+      
+      // Simulate job progression based on time elapsed
+      const [, timestamp] = jobId.split('_');
+      const createdTime = parseInt(timestamp);
+      const elapsed = Date.now() - createdTime;
+      
+      // Simulate: queued (0-10s) -> processing (10-30s) -> ready (30s+)
+      let ourStatus = 'queued';
+      let videoUrl = null;
+      let thumbnailUrl = null;
+      let duration = null;
+      
+      if (elapsed > 30000) { // 30 seconds
+        ourStatus = 'ready';
+        videoUrl = 'https://example.com/mock-video.mp4';
+        thumbnailUrl = 'https://example.com/mock-thumbnail.jpg';
+        duration = 30;
+      } else if (elapsed > 10000) { // 10 seconds
+        ourStatus = 'processing';
+      }
+      
+      // Update job status in database
+      const { error: updateError } = await supabase
+        .from('video_jobs')
+        .update({
+          status: ourStatus,
+          video_url: videoUrl,
+          thumbnail_url: thumbnailUrl,
+          duration: duration,
+        })
+        .eq('job_id', jobId);
+
+      if (updateError) {
+        console.error('Error updating mock job status:', updateError);
+      }
+
+      return new Response(JSON.stringify({
+        status: ourStatus,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        duration: duration,
+        progress: elapsed > 30000 ? 100 : Math.min(95, Math.floor(elapsed / 300)), // Progress simulation
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    /* 
+    // COMMENTED OUT: Actual API call to be used when correct endpoint is found
     // Check status with Captions.ai API
     const captionsResponse = await fetch(`https://api.captions.ai/v1/video/status/${jobId}`, {
       method: 'GET',
@@ -149,6 +203,17 @@ serve(async (req) => {
       duration: duration,
       error_message: errorMessage,
       progress: statusData.progress,
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    */
+
+    // If not a mock job, return processing status for now
+    // TODO: Implement actual Captions.ai API integration
+    return new Response(JSON.stringify({
+      status: 'processing',
+      progress: 50,
+      message: 'Waiting for Captions.ai API integration'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
