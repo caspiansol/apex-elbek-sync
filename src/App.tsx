@@ -7,7 +7,6 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
-import AdWizard from "./pages/AdWizard";
 import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
 import RequireAuth from "./components/RequireAuth";
@@ -29,7 +28,6 @@ const App = () => (
           {/* Protected app routes with persistent navigation */}
           <Route element={<RequireAuth><AppShell /></RequireAuth>}>
             <Route path="/app" element={<Dashboard />} />
-            <Route path="/app/ad-wizard" element={<AdWizard />} />
             <Route path="/app/library" element={<Library />} />
           </Route>
 
