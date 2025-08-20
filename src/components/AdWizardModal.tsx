@@ -842,9 +842,7 @@ Write as one continuous, engaging script without section labels or formatting. M
               </AlertDialog>
             </div>
           </div>
-          <DialogDescription>
-            Step {currentStep} of {totalSteps}: Complete the form below to generate your AI-powered marketing video.
-          </DialogDescription>
+          
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Step {currentStep} of {totalSteps}</span>
