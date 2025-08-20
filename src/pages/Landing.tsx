@@ -31,7 +31,7 @@ const Landing = () => {
           </div>
           <div className="flex space-x-4">
             <Link to="/login">
-              <Button variant="outline" className="border-primary/30 hover:border-primary hover:shadow-purple transition-all duration-300">
+              <Button variant="outline" className="border-primary/30 hover:border-primary hover:shadow-blue transition-all duration-300">
                 Sign In
               </Button>
             </Link>
@@ -74,7 +74,7 @@ const Landing = () => {
                   Launch Studio <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="border-accent/30 hover:border-accent hover:shadow-green text-lg px-8 py-4 transition-all duration-300">
+              <Button variant="outline" size="lg" className="border-accent/30 hover:border-accent hover:shadow-light-blue text-lg px-8 py-4 transition-all duration-300">
                 Watch Demo
               </Button>
             </div>
@@ -87,7 +87,7 @@ const Landing = () => {
             transition={{ delay: 0.4 }}
             className="grid md:grid-cols-3 gap-8 mb-24"
           >
-            <Card className="bg-gradient-card border border-primary/20 backdrop-blur-sm hover:shadow-purple transition-all duration-300 hover:scale-105 group">
+            <Card className="bg-gradient-card border border-primary/20 backdrop-blur-sm hover:shadow-blue transition-all duration-300 hover:scale-105 group">
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto mb-4 p-4 bg-gradient-primary rounded-2xl shadow-neon w-fit">
                   <Zap className="h-12 w-12 text-white group-hover:animate-glow" />
@@ -105,9 +105,9 @@ const Landing = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card border border-accent/20 backdrop-blur-sm hover:shadow-green transition-all duration-300 hover:scale-105 group">
+            <Card className="bg-gradient-card border border-accent/20 backdrop-blur-sm hover:shadow-light-blue transition-all duration-300 hover:scale-105 group">
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 p-4 bg-accent rounded-2xl shadow-green w-fit">
+                <div className="mx-auto mb-4 p-4 bg-accent rounded-2xl shadow-light-blue w-fit">
                   <Target className="h-12 w-12 text-white group-hover:animate-float" />
                 </div>
                 <CardTitle className="text-2xl text-accent">Precision Targeting</CardTitle>
@@ -194,7 +194,7 @@ const Landing = () => {
                       Start Your Journey <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
-                  <Button variant="outline" size="lg" className="border-accent/30 hover:border-accent hover:shadow-green text-lg px-8 py-4 transition-all duration-300">
+                  <Button variant="outline" size="lg" className="border-accent/30 hover:border-accent hover:shadow-light-blue text-lg px-8 py-4 transition-all duration-300">
                     View Pricing
                   </Button>
                 </div>

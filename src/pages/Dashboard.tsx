@@ -37,13 +37,13 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Card className="bg-gradient-card border border-primary/20 backdrop-blur-sm hover:shadow-purple transition-all duration-300 hover:scale-105">
+          <Card className="bg-gradient-card border border-primary/20 backdrop-blur-sm hover:shadow-blue transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-primary mb-2">99%</div>
               <div className="text-sm text-muted-foreground">Success Rate</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-card border border-accent/20 backdrop-blur-sm hover:shadow-green transition-all duration-300 hover:scale-105">
+          <Card className="bg-gradient-card border border-accent/20 backdrop-blur-sm hover:shadow-light-blue transition-all duration-300 hover:scale-105">
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-accent mb-2">10x</div>
               <div className="text-sm text-muted-foreground">Faster Creation</div>
@@ -84,7 +84,7 @@ const Dashboard = () => {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="h-32 flex-col space-y-4 border-accent/50 hover:bg-accent/10 hover:border-accent hover:shadow-green transition-all duration-300 hover:scale-105 text-lg"
+                  className="h-32 flex-col space-y-4 border-accent/50 hover:bg-accent/10 hover:border-accent hover:shadow-light-blue transition-all duration-300 hover:scale-105 text-lg"
                   onClick={() => navigate('/app/library')}
                 >
                   <Library className="h-12 w-12 text-accent animate-float" />

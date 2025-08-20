@@ -74,8 +74,8 @@ export default {
 			},
 			boxShadow: {
 				'neon': 'var(--shadow-neon)',
-				'purple': 'var(--shadow-purple)',
-				'green': 'var(--shadow-green)'
+				'blue': 'var(--shadow-blue)',
+				'light-blue': 'var(--shadow-light-blue)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
