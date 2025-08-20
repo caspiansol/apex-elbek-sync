@@ -34,10 +34,10 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { wizardData, captionsPayload, title } = await req.json();
+    const { wizardData, script, title } = await req.json();
 
     console.log('Creating video job for user:', user.id);
-    console.log('Captions payload:', JSON.stringify(captionsPayload, null, 2));
+    console.log('Script to submit:', script);
 
     // Get Captions.ai API key
     const captionsApiKey = Deno.env.get('Captions_ai');
@@ -45,31 +45,14 @@ serve(async (req) => {
       throw new Error('Captions.ai API key not configured');
     }
 
-    // TEMPORARY: Since the correct Captions.ai API endpoint is not available,
-    // we'll create a mock job for testing purposes
-    // TODO: Replace with actual Captions.ai API endpoint when available
-    
-    console.log('Note: Using mock Captions.ai response since API endpoint needs to be corrected');
-    
-    // Generate a mock job ID for testing
-    const jobId = `mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    
-    // Simulate API response
-    const captionsData = {
-      job_id: jobId,
-      status: 'queued',
-      message: 'Video job created successfully (mock)'
-    };
-
-    /* 
-    // COMMENTED OUT: Actual API call to be used when correct endpoint is found
-    const captionsResponse = await fetch('https://api.captions.ai/v1/video/generate', {
+    // Call Captions.ai API with the new simplified endpoint
+    const captionsResponse = await fetch('https://api.captions.ai/api/creator/submit', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${captionsApiKey}`,
+        'Authorization': captionsApiKey, // API key as authorization header
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(captionsPayload),
+      body: JSON.stringify({ script }), // Send script as body
     });
 
     if (!captionsResponse.ok) {
@@ -79,9 +62,10 @@ serve(async (req) => {
     }
 
     const captionsData = await captionsResponse.json();
-    */
-    
     console.log('Captions.ai response:', captionsData);
+
+    // Extract job ID from response (adjust based on actual API response structure)
+    const jobId = captionsData.job_id || captionsData.id || `job_${Date.now()}`;
 
     // Store job in database
     const { data: videoJob, error: dbError } = await supabase
@@ -90,9 +74,9 @@ serve(async (req) => {
         user_id: user.id,
         job_id: jobId,
         title: title,
-        status: 'queued',
+        status: captionsData.status || 'queued',
         wizard_data: wizardData,
-        captions_payload: captionsPayload,
+        captions_payload: { script }, // Store the script that was sent
       })
       .select()
       .single();
@@ -104,8 +88,9 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       job_id: jobId,
-      status: 'queued',
-      video_job: videoJob
+      status: captionsData.status || 'queued',
+      video_job: videoJob,
+      captions_response: captionsData
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

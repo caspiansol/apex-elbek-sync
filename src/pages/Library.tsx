@@ -19,6 +19,7 @@ interface VideoJob {
   created_at: string;
   updated_at: string;
   wizard_data: any;
+  captions_payload?: any;
 }
 
 const Library = () => {
@@ -137,10 +138,13 @@ const Library = () => {
   // Retry failed job
   const retryJob = async (job: VideoJob) => {
     try {
+      // Extract script from the stored captions_payload
+      const script = job.captions_payload?.script || "No script available";
+      
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: {
           wizardData: job.wizard_data,
-          captionsPayload: job.wizard_data.captionsPayload,
+          script: script,
           title: job.title
         }
       });

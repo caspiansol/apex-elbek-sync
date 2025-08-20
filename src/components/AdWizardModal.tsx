@@ -316,7 +316,7 @@ Write as one continuous, engaging script without section labels or formatting. M
       } = await supabase.functions.invoke('create-video-job', {
         body: {
           wizardData,
-          captionsPayload,
+          script: generatedScript || "Generated script will appear here",
           title
         }
       });
