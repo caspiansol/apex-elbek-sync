@@ -655,9 +655,29 @@ Write as one continuous, engaging script without section labels or formatting. M
             </Button>
           </div>
           
-          {currentStep < totalSteps && <Button onClick={() => setCurrentStep(currentStep + 1)} disabled={!canProceed()}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+          {currentStep < totalSteps && <Button 
+              onClick={async () => {
+                if (currentStep === 7) {
+                  // Auto-generate when moving from step 7 to step 8
+                  setCurrentStep(currentStep + 1);
+                  await handleGenerate();
+                } else {
+                  setCurrentStep(currentStep + 1);
+                }
+              }} 
+              disabled={!canProceed() || (currentStep === 7 && isGenerating)}
+            >
+              {currentStep === 7 && isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </>
+              )}
             </Button>}
         </div>
       </DialogContent>
