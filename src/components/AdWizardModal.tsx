@@ -208,10 +208,14 @@ Write as one continuous, engaging script without section labels or formatting. M
       } = generatePrompts();
 
       // Call Supabase Edge Function to generate the script securely
-      const { data, error } = await supabase.functions.invoke('generate-ad-script', {
-        body: { prompt: scriptPrompt }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-ad-script', {
+        body: {
+          prompt: scriptPrompt
+        }
       });
-
       if (error) {
         console.error('generate-ad-script error:', error);
         // Fallback to mock response if API fails
@@ -249,27 +253,27 @@ Write as one continuous, engaging script without section labels or formatting. M
   const handleCreateVideo = async () => {
     try {
       setIsGenerating(true);
-      
+
       // Build the title from wizard data
       const title = `${wizardData.businessName} - ${wizardData.offer}`;
-      
+
       // Build the captions payload from wizard data
       const finalAudience = wizardData.audience === 'Custom' ? wizardData.customAudience : wizardData.audience;
       const duration = parseInt(wizardData.length.replace('s', ''));
-      
+
       // Map platform to aspect ratio
       let aspectRatio = '1:1';
-      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';
-      else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
-      
+      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
+
       // Map brand voice to tone
-      const toneMap: { [key: string]: string } = {
+      const toneMap: {
+        [key: string]: string;
+      } = {
         'friendly-empathetic': 'friendly',
         'professional-authoritative': 'professional',
         'casual-relatable': 'casual',
         'energetic-upbeat': 'energetic'
       };
-      
       const captionsPayload = {
         script: generatedScript || "Generated script will appear here",
         duration_sec: duration,
@@ -306,30 +310,28 @@ Write as one continuous, engaging script without section labels or formatting. M
       };
 
       // Call our edge function to create the video job
-      const { data, error } = await supabase.functions.invoke('create-video-job', {
-        body: { 
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('create-video-job', {
+        body: {
           wizardData,
           captionsPayload,
           title
         }
       });
-
       if (error) {
         console.error('Error creating video job:', error);
         throw new Error(error.message || 'Failed to create video job');
       }
-
       console.log('Video job created:', data);
-      
       toast({
         title: "Rendering started!",
         description: "Your video is being created. Check the Library to see progress."
       });
-      
       onOpenChange(false);
       localStorage.removeItem('adWizardDraft');
       navigate('/app/library');
-      
     } catch (error) {
       console.error('Video creation error:', error);
       toast({
@@ -341,7 +343,6 @@ Write as one continuous, engaging script without section labels or formatting. M
       setIsGenerating(false);
     }
   };
-
   const handleReset = () => {
     setWizardData({
       businessName: "",
@@ -374,7 +375,6 @@ Write as one continuous, engaging script without section labels or formatting. M
       title: "Wizard reset successfully"
     });
   };
-
   const handleStartAgain = handleReset;
   const renderStep = () => {
     // Show templates overlay if requested
@@ -683,18 +683,16 @@ Write as one continuous, engaging script without section labels or formatting. M
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {PLACEHOLDER_STYLES.map((style) => (
-                              <SelectItem key={style.style} value={style.style}>
+                            {PLACEHOLDER_STYLES.map(style => <SelectItem key={style.style} value={style.style}>
                                 {style.label} {style.example}
-                              </SelectItem>
-                            ))}
+                              </SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Tabs value={showFilledVersion ? "filled" : "template"} onValueChange={(value) => setShowFilledVersion(value === "filled")}>
+                    <Tabs value={showFilledVersion ? "filled" : "template"} onValueChange={value => setShowFilledVersion(value === "filled")}>
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="filled">Filled</TabsTrigger>
                         <TabsTrigger value="template">Template</TabsTrigger>
@@ -733,10 +731,12 @@ Write as one continuous, engaging script without section labels or formatting. M
                           <div className="flex items-center justify-between mb-2">
                             <Label className="text-sm font-medium">Script Prompt (Template)</Label>
                             <Button variant="outline" size="sm" onClick={() => {
-                              const templatePrompt = createTemplatePrompt(generatedContent.scriptPrompt, placeholderStyle);
-                              navigator.clipboard.writeText(templatePrompt);
-                              toast({ title: "Template prompt copied!" });
-                            }}>
+                          const templatePrompt = createTemplatePrompt(generatedContent.scriptPrompt, placeholderStyle);
+                          navigator.clipboard.writeText(templatePrompt);
+                          toast({
+                            title: "Template prompt copied!"
+                          });
+                        }}>
                               <Copy className="mr-1 h-3 w-3" />
                               Copy
                             </Button>
@@ -750,10 +750,12 @@ Write as one continuous, engaging script without section labels or formatting. M
                           <div className="flex items-center justify-between mb-2">
                             <Label className="text-sm font-medium">Captions AI Payload (Template)</Label>
                             <Button variant="outline" size="sm" onClick={() => {
-                              const templatePayload = createTemplatePayload(generatedContent.captionsPayload, placeholderStyle);
-                              navigator.clipboard.writeText(JSON.stringify(templatePayload, null, 2));
-                              toast({ title: "Template payload copied!" });
-                            }}>
+                          const templatePayload = createTemplatePayload(generatedContent.captionsPayload, placeholderStyle);
+                          navigator.clipboard.writeText(JSON.stringify(templatePayload, null, 2));
+                          toast({
+                            title: "Template payload copied!"
+                          });
+                        }}>
                               <Copy className="mr-1 h-3 w-3" />
                               Copy
                             </Button>
@@ -777,10 +779,7 @@ Write as one continuous, engaging script without section labels or formatting. M
                         <Save className="mr-2 h-4 w-4" />
                         Save Draft
                       </Button>
-                      <Button variant="outline" onClick={handleStartAgain}>
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Start Again
-                      </Button>
+                      
                     </div>
                   </CardContent>
                 </Card>
@@ -872,29 +871,22 @@ Write as one continuous, engaging script without section labels or formatting. M
             </Button>
           </div>
           
-          {currentStep < totalSteps && <Button 
-              onClick={async () => {
-                if (currentStep === 7) {
-                  // Auto-generate when moving from step 7 to step 8
-                  setCurrentStep(currentStep + 1);
-                  await handleGenerate();
-                } else {
-                  setCurrentStep(currentStep + 1);
-                }
-              }} 
-              disabled={!canProceed() || (currentStep === 7 && isGenerating)}
-            >
-              {currentStep === 7 && isGenerating ? (
-                <>
+          {currentStep < totalSteps && <Button onClick={async () => {
+          if (currentStep === 7) {
+            // Auto-generate when moving from step 7 to step 8
+            setCurrentStep(currentStep + 1);
+            await handleGenerate();
+          } else {
+            setCurrentStep(currentStep + 1);
+          }
+        }} disabled={!canProceed() || currentStep === 7 && isGenerating}>
+              {currentStep === 7 && isGenerating ? <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
                   Generating...
-                </>
-              ) : (
-                <>
+                </> : <>
                   Next
                   <ChevronRight className="h-4 w-4 ml-1" />
-                </>
-              )}
+                </>}
             </Button>}
         </div>
       </DialogContent>
