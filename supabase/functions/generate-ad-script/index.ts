@@ -32,7 +32,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           { role: 'system', content: 'You are a world-class direct-response copywriter. Write natural, flowing ad scripts with perfect pacing and no section labels.' },
           { role: 'user', content: prompt }
@@ -51,7 +51,21 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const generatedText = data.choices?.[0]?.message?.content || '';
+    console.log('OpenAI response preview:', JSON.stringify(data).slice(0, 1000));
+
+    const generatedText =
+      data?.choices?.[0]?.message?.content ??
+      data?.choices?.[0]?.content ??
+      data?.message?.content ??
+      '';
+
+    if (!generatedText || typeof generatedText !== 'string' || generatedText.trim().length === 0) {
+      console.error('AI returned empty content payload', data);
+      return new Response(JSON.stringify({ error: 'AI returned empty content' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ generatedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
