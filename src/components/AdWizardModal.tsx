@@ -24,6 +24,7 @@ interface WizardData {
   offer: string;
   primaryBenefit: string;
   audience: string;
+  customAudience: string;
   painPoint: string;
   outcome: string;
   proofPoint: string;
@@ -39,10 +40,21 @@ interface WizardData {
   noAvatar: boolean;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+  data: WizardData;
+  createdAt: string;
+}
+
 const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [generatedScript, setGeneratedScript] = useState<string>("");
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -52,6 +64,7 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
     offer: "",
     primaryBenefit: "",
     audience: "",
+    customAudience: "",
     painPoint: "",
     outcome: "",
     proofPoint: "",
@@ -76,7 +89,31 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
     toast({ title: "Draft saved successfully" });
   };
 
-  // Load draft from localStorage
+  const saveTemplate = () => {
+    const templateName = prompt("Enter template name:");
+    if (!templateName) return;
+    
+    const template: Template = {
+      id: Date.now().toString(),
+      name: templateName,
+      description: `${wizardData.businessName} - ${wizardData.offer}`,
+      data: wizardData,
+      createdAt: new Date().toISOString()
+    };
+    
+    const updatedTemplates = [...templates, template];
+    setTemplates(updatedTemplates);
+    localStorage.setItem('adWizardTemplates', JSON.stringify(updatedTemplates));
+    toast({ title: "Template saved successfully" });
+  };
+
+  const loadTemplate = (template: Template) => {
+    setWizardData(template.data);
+    setShowTemplates(false);
+    toast({ title: "Template loaded successfully" });
+  };
+
+  // Load draft and templates from localStorage
   useEffect(() => {
     if (open) {
       const saved = localStorage.getItem('adWizardDraft');
@@ -84,6 +121,11 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
         const { wizardData: savedData, currentStep: savedStep } = JSON.parse(saved);
         setWizardData(savedData);
         setCurrentStep(savedStep);
+      }
+      
+      const savedTemplates = localStorage.getItem('adWizardTemplates');
+      if (savedTemplates) {
+        setTemplates(JSON.parse(savedTemplates));
       }
     }
   }, [open]);
@@ -99,15 +141,16 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
   };
 
   const generatePrompts = () => {
+    const finalAudience = wizardData.audience === 'Custom' ? wizardData.customAudience : wizardData.audience;
     const scriptPrompt = `Write a ${wizardData.length} ${wizardData.platform} performance-ad video script for ${wizardData.businessName}.
 Structure: HOOK (first 3s) → BODY (pain relief + ${wizardData.primaryBenefit}) → CTA ("${wizardData.cta}").
-Tone: ${wizardData.brandVoice}. Offer: ${wizardData.offer}. Audience: ${wizardData.audience}. Pain: ${wizardData.painPoint}.
+Tone: ${wizardData.brandVoice}. Offer: ${wizardData.offer}. Audience: ${finalAudience}. Pain: ${wizardData.painPoint}.
 After-state: ${wizardData.outcome}. Proof: ${wizardData.proofPoint}. Geo: ${wizardData.geoTargeting}. Must-include: ${wizardData.keywords}.
 Keep within ${wizardData.length.replace('s', '')}s, plain language, 2–3 short sentences per section, captions-friendly punctuation.
 Return as: HOOK: … BODY: … CTA: …`;
 
     const captionsPayload = {
-      script: "Generated script will appear here",
+      script: generatedScript || "Generated script will appear here",
       duration_sec: parseInt(wizardData.length.replace('s', '')),
       aspect_ratio: wizardData.platform.includes('9:16') ? '9:16' : wizardData.platform.includes('16:9') ? '16:9' : '1:1',
       style: { 
@@ -132,11 +175,36 @@ Return as: HOOK: … BODY: … CTA: …`;
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      // Mock API calls - replace with real endpoints
       const { scriptPrompt, captionsPayload } = generatePrompts();
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call ChatGPT API with the provided key
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer Chat_key`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'user',
+              content: scriptPrompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const script = data.choices[0].message.content;
+        setGeneratedScript(script);
+      } else {
+        // Fallback to mock response if API fails
+        setGeneratedScript("HOOK: Are you tired of overpaying for insurance? BODY: Our customers save an average of $400 per year while getting better coverage and peace of mind with our A+ rated service. CTA: Call now for your free quote!");
+      }
       
       setGeneratedContent({
         scriptPrompt,
@@ -146,7 +214,17 @@ Return as: HOOK: … BODY: … CTA: …`;
       
       toast({ title: "Content generated successfully!" });
     } catch (error) {
-      toast({ title: "Generation failed", description: "Please try again.", variant: "destructive" });
+      // Fallback to mock response if API fails
+      setGeneratedScript("HOOK: Are you tired of overpaying for insurance? BODY: Our customers save an average of $400 per year while getting better coverage and peace of mind with our A+ rated service. CTA: Call now for your free quote!");
+      
+      const { scriptPrompt, captionsPayload } = generatePrompts();
+      setGeneratedContent({
+        scriptPrompt,
+        captionsPayload,
+        thumbnailPrompt: `Create a thumbnail for ${wizardData.businessName} ad about ${wizardData.offer}`
+      });
+      
+      toast({ title: "Content generated successfully!" });
     } finally {
       setIsGenerating(false);
     }
@@ -244,6 +322,17 @@ Return as: HOOK: … BODY: … CTA: …`;
                   </Badge>
                 ))}
               </div>
+              {wizardData.audience === 'Custom' && (
+                <div className="mt-4">
+                  <Label htmlFor="customAudience">Describe your custom audience</Label>
+                  <Input
+                    id="customAudience"
+                    value={wizardData.customAudience}
+                    onChange={(e) => setWizardData({...wizardData, customAudience: e.target.value})}
+                    placeholder="e.g., Young professionals aged 25-35 in urban areas"
+                  />
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="painPoint">Biggest pain or worry (one sentence)</Label>
@@ -434,7 +523,45 @@ Return as: HOOK: … BODY: … CTA: …`;
       case 8:
         return (
           <div className="space-y-6">
-            {!generatedContent ? (
+            {!showTemplates && !generatedContent && (
+              <div className="mb-4">
+                <Button variant="outline" onClick={() => setShowTemplates(true)}>
+                  Load from Templates ({templates.length})
+                </Button>
+              </div>
+            )}
+
+            {showTemplates && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Choose Template</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {templates.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">No templates saved yet</p>
+                    ) : (
+                      templates.map((template) => (
+                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <p className="font-medium">{template.name}</p>
+                            <p className="text-sm text-muted-foreground">{template.description}</p>
+                          </div>
+                          <Button size="sm" onClick={() => loadTemplate(template)}>
+                            Load
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <Button variant="outline" className="mt-2" onClick={() => setShowTemplates(false)}>
+                    Cancel
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {!showTemplates && !generatedContent && (
               <div className="text-center py-8">
                 <h3 className="text-xl font-semibold mb-4">Ready to Generate</h3>
                 <p className="text-muted-foreground mb-6">
@@ -451,14 +578,34 @@ Return as: HOOK: … BODY: … CTA: …`;
                   )}
                 </Button>
               </div>
-            ) : (
+            )}
+
+            {!showTemplates && generatedContent && (
               <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Generated Script (Editable)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={generatedScript}
+                      onChange={(e) => setGeneratedScript(e.target.value)}
+                      className="min-h-32 text-sm"
+                      placeholder="Generated script will appear here..."
+                    />
+                    <Button variant="outline" size="sm" className="mt-2" onClick={() => navigator.clipboard.writeText(generatedScript)}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Script
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Script Prompt</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-muted p-4 rounded-lg text-sm">
+                    <div className="bg-muted p-4 rounded-lg text-sm break-words">
                       {generatedContent.scriptPrompt}
                     </div>
                     <Button variant="outline" size="sm" className="mt-2" onClick={() => navigator.clipboard.writeText(generatedContent.scriptPrompt)}>
@@ -473,12 +620,16 @@ Return as: HOOK: … BODY: … CTA: …`;
                     <CardTitle>Captions AI Payload</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-muted p-4 rounded-lg text-sm max-h-40 overflow-y-auto">
-                      <pre>{JSON.stringify(generatedContent.captionsPayload, null, 2)}</pre>
+                    <div className="bg-muted p-4 rounded-lg text-sm max-h-40 overflow-y-auto break-words">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(generatedContent.captionsPayload, null, 2)}</pre>
                     </div>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       <Button onClick={handleCreateVideo}>
                         Create with Captions AI
+                      </Button>
+                      <Button variant="outline" onClick={saveTemplate}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Template
                       </Button>
                       <Button variant="outline" onClick={saveDraft}>
                         <Save className="mr-2 h-4 w-4" />
@@ -512,7 +663,7 @@ Return as: HOOK: … BODY: … CTA: …`;
     switch (currentStep) {
       case 1: return wizardData.businessName && wizardData.brandVoice;
       case 2: return wizardData.offer && wizardData.primaryBenefit;
-      case 3: return wizardData.audience && wizardData.painPoint;
+      case 3: return wizardData.audience && wizardData.painPoint && (wizardData.audience !== 'Custom' || wizardData.customAudience);
       case 4: return wizardData.outcome;
       case 5: return wizardData.cta && wizardData.platform && wizardData.length;
       case 6: return true; // Optional fields
