@@ -9,10 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronRight, Save, Copy, Wand2, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { createTemplatePrompt, createTemplatePayload, PLACEHOLDER_STYLES, type PlaceholderStyle } from "@/lib/placeholder-utils";
 interface AdWizardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,6 +58,8 @@ const AdWizardModal = ({
   const [generatedScript, setGeneratedScript] = useState<string>("");
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [placeholderStyle, setPlaceholderStyle] = useState<PlaceholderStyle>('double-curly');
+  const [showFilledVersion, setShowFilledVersion] = useState(true);
   const {
     toast
   } = useToast();
@@ -337,7 +342,7 @@ Write as one continuous, engaging script without section labels or formatting. M
     }
   };
 
-  const handleStartAgain = () => {
+  const handleReset = () => {
     setWizardData({
       businessName: "",
       brandVoice: "",
@@ -362,11 +367,15 @@ Write as one continuous, engaging script without section labels or formatting. M
     setCurrentStep(1);
     setGeneratedContent(null);
     setGeneratedScript("");
+    setPlaceholderStyle('double-curly');
+    setShowFilledVersion(true);
     localStorage.removeItem('adWizardDraft');
     toast({
       title: "Wizard reset successfully"
     });
   };
+
+  const handleStartAgain = handleReset;
   const renderStep = () => {
     // Show templates overlay if requested
     if (showTemplates) {
@@ -665,28 +674,98 @@ Write as one continuous, engaging script without section labels or formatting. M
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Script Prompt</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Template Output</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="placeholder-style" className="text-sm font-medium">Style:</Label>
+                        <Select value={placeholderStyle} onValueChange={(value: PlaceholderStyle) => setPlaceholderStyle(value)}>
+                          <SelectTrigger className="w-36">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PLACEHOLDER_STYLES.map((style) => (
+                              <SelectItem key={style.style} value={style.style}>
+                                {style.label} {style.example}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-muted p-4 rounded-lg text-sm break-words">
-                      {generatedContent.scriptPrompt}
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-2" onClick={() => navigator.clipboard.writeText(generatedContent.scriptPrompt)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy Prompt
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <Tabs value={showFilledVersion ? "filled" : "template"} onValueChange={(value) => setShowFilledVersion(value === "filled")}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="filled">Filled</TabsTrigger>
+                        <TabsTrigger value="template">Template</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="filled" className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">Script Prompt (Filled)</Label>
+                            <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(generatedContent.scriptPrompt)}>
+                              <Copy className="mr-1 h-3 w-3" />
+                              Copy
+                            </Button>
+                          </div>
+                          <div className="bg-muted p-3 rounded-lg text-sm max-h-32 overflow-y-auto break-words">
+                            {generatedContent.scriptPrompt}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">Captions AI Payload (Filled)</Label>
+                            <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(JSON.stringify(generatedContent.captionsPayload, null, 2))}>
+                              <Copy className="mr-1 h-3 w-3" />
+                              Copy
+                            </Button>
+                          </div>
+                          <div className="bg-muted p-3 rounded-lg text-sm max-h-32 overflow-y-auto break-words">
+                            <pre className="whitespace-pre-wrap">{JSON.stringify(generatedContent.captionsPayload, null, 2)}</pre>
+                          </div>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="template" className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">Script Prompt (Template)</Label>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              const templatePrompt = createTemplatePrompt(generatedContent.scriptPrompt, placeholderStyle);
+                              navigator.clipboard.writeText(templatePrompt);
+                              toast({ title: "Template prompt copied!" });
+                            }}>
+                              <Copy className="mr-1 h-3 w-3" />
+                              Copy
+                            </Button>
+                          </div>
+                          <div className="bg-muted p-3 rounded-lg text-sm max-h-32 overflow-y-auto break-words">
+                            {createTemplatePrompt(generatedContent.scriptPrompt, placeholderStyle)}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">Captions AI Payload (Template)</Label>
+                            <Button variant="outline" size="sm" onClick={() => {
+                              const templatePayload = createTemplatePayload(generatedContent.captionsPayload, placeholderStyle);
+                              navigator.clipboard.writeText(JSON.stringify(templatePayload, null, 2));
+                              toast({ title: "Template payload copied!" });
+                            }}>
+                              <Copy className="mr-1 h-3 w-3" />
+                              Copy
+                            </Button>
+                          </div>
+                          <div className="bg-muted p-3 rounded-lg text-sm max-h-32 overflow-y-auto break-words">
+                            <pre className="whitespace-pre-wrap">{JSON.stringify(createTemplatePayload(generatedContent.captionsPayload, placeholderStyle), null, 2)}</pre>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Captions AI Payload</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-muted p-4 rounded-lg text-sm max-h-40 overflow-y-auto break-words">
-                      <pre className="whitespace-pre-wrap">{JSON.stringify(generatedContent.captionsPayload, null, 2)}</pre>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2 pt-4">
+                    <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
                       <Button onClick={handleCreateVideo}>
                         Create with Captions AI
                       </Button>
@@ -738,9 +817,31 @@ Write as one continuous, engaging script without section labels or formatting. M
         <DialogHeader>
           <div className="flex items-center justify-between pt-2">
             <DialogTitle>Ad Wizard - {stepTitles[currentStep - 1]}</DialogTitle>
-            <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)} className="mx-0 py-0 my-[10px]">
-              Templates ({templates.length})
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)} className="mx-0 py-0 my-[10px]">
+                Templates ({templates.length})
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="mx-0 py-0 my-[10px]" aria-label="Reset wizard">
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    Reset
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset all answers and start over?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will clear all your answers and saved drafts. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
           <DialogDescription>
             Step {currentStep} of {totalSteps}: Complete the form below to generate your AI-powered marketing video.
