@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const CHAT_RUFAT_API_KEY = Deno.env.get('Chat_key');
+const CHAT_RUFAT_API_KEY = Deno.env.get('chat_rufat');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +18,7 @@ serve(async (req) => {
     const { prompt } = await req.json();
 
     if (!CHAT_RUFAT_API_KEY) {
-      console.error('Missing Chat_key secret');
+      console.error('Missing chat_rufat secret');
       return new Response(JSON.stringify({ error: 'Server not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
