@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Save, Copy, Wand2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 interface AdWizardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -201,30 +202,17 @@ Write as one continuous, engaging script without section labels or formatting. M
         captionsPayload
       } = generatePrompts();
 
-      // Call ChatGPT API with the provided key
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer Chat_key`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{
-            role: 'user',
-            content: scriptPrompt
-          }],
-          max_tokens: 500,
-          temperature: 0.7
-        })
+      // Call Supabase Edge Function to generate the script securely
+      const { data, error } = await supabase.functions.invoke('generate-ad-script', {
+        body: { prompt: scriptPrompt }
       });
-      if (response.ok) {
-        const data = await response.json();
-        const script = data.choices[0].message.content;
-        setGeneratedScript(script);
-      } else {
+
+      if (error) {
+        console.error('generate-ad-script error:', error);
         // Fallback to mock response if API fails
         setGeneratedScript("HOOK: Are you tired of overpaying for insurance? BODY: Our customers save an average of $400 per year while getting better coverage and peace of mind with our A+ rated service. CTA: Call now for your free quote!");
+      } else {
+        setGeneratedScript((data as any).generatedText);
       }
       setGeneratedContent({
         scriptPrompt,
