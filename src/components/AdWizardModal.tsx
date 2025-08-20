@@ -245,6 +245,39 @@ Return as a single paragraph script.`;
   };
 
   const renderStep = () => {
+    // Show templates overlay if requested
+    if (showTemplates) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Choose Template</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {templates.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No templates saved yet</p>
+              ) : (
+                templates.map((template) => (
+                  <div key={template.id} className="flex items-center justify-between p-2 border rounded">
+                    <div>
+                      <p className="font-medium">{template.name}</p>
+                      <p className="text-sm text-muted-foreground">{template.description}</p>
+                    </div>
+                    <Button size="sm" onClick={() => loadTemplate(template)}>
+                      Load
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+            <Button variant="outline" className="mt-2" onClick={() => setShowTemplates(false)}>
+              Cancel
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
     switch (currentStep) {
       case 1:
         return (
@@ -523,45 +556,7 @@ Return as a single paragraph script.`;
       case 8:
         return (
           <div className="space-y-6">
-            {!showTemplates && !generatedContent && (
-              <div className="mb-4">
-                <Button variant="outline" onClick={() => setShowTemplates(true)}>
-                  Load from Templates ({templates.length})
-                </Button>
-              </div>
-            )}
-
-            {showTemplates && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Choose Template</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {templates.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">No templates saved yet</p>
-                    ) : (
-                      templates.map((template) => (
-                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <p className="font-medium">{template.name}</p>
-                            <p className="text-sm text-muted-foreground">{template.description}</p>
-                          </div>
-                          <Button size="sm" onClick={() => loadTemplate(template)}>
-                            Load
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <Button variant="outline" className="mt-2" onClick={() => setShowTemplates(false)}>
-                    Cancel
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {!showTemplates && !generatedContent && (
+            {!generatedContent && (
               <div className="text-center py-8">
                 <h3 className="text-xl font-semibold mb-4">Ready to Generate</h3>
                 <p className="text-muted-foreground mb-6">
@@ -580,7 +575,7 @@ Return as a single paragraph script.`;
               </div>
             )}
 
-            {!showTemplates && generatedContent && (
+            {generatedContent && (
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -678,6 +673,9 @@ Return as a single paragraph script.`;
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Ad Wizard - {stepTitles[currentStep - 1]}</DialogTitle>
+            <Button variant="outline" size="sm" onClick={() => setShowTemplates(true)}>
+              Templates ({templates.length})
+            </Button>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
