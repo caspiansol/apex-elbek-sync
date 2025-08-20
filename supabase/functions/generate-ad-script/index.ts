@@ -25,20 +25,19 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch('https://api.chat-rufat.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${CHAT_RUFAT_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-2025-08-07',
         messages: [
           { role: 'system', content: 'You are a world-class direct-response copywriter. Write natural, flowing ad scripts with perfect pacing and no section labels.' },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 800,
-        temperature: 0.7,
+        max_completion_tokens: 800,
       }),
     });
 
