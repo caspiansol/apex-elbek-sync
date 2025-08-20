@@ -147,7 +147,7 @@ Structure: HOOK (first 3s) → BODY (pain relief + ${wizardData.primaryBenefit})
 Tone: ${wizardData.brandVoice}. Offer: ${wizardData.offer}. Audience: ${finalAudience}. Pain: ${wizardData.painPoint}.
 After-state: ${wizardData.outcome}. Proof: ${wizardData.proofPoint}. Geo: ${wizardData.geoTargeting}. Must-include: ${wizardData.keywords}.
 Keep within ${wizardData.length.replace('s', '')}s, plain language, 2–3 short sentences per section, captions-friendly punctuation.
-Return as: HOOK: … BODY: … CTA: …`;
+Return as a single paragraph script.`;
 
     const captionsPayload = {
       script: generatedScript || "Generated script will appear here",
