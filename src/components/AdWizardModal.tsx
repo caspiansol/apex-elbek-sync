@@ -678,9 +678,6 @@ Return as: HOOK: … BODY: … CTA: …`;
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Ad Wizard - {stepTitles[currentStep - 1]}</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
