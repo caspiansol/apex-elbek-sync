@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const OPENAI_API_KEY = Deno.env.get('Chat_key');
+const CHAT_RUFAT_API_KEY = Deno.env.get('Chat_key');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json();
 
-    if (!OPENAI_API_KEY) {
+    if (!CHAT_RUFAT_API_KEY) {
       console.error('Missing Chat_key secret');
       return new Response(JSON.stringify({ error: 'Server not configured' }), {
         status: 500,
@@ -25,10 +25,10 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.chat-rufat.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${CHAT_RUFAT_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -44,7 +44,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('OpenAI API error:', response.status, errText);
+      console.error('Chat_rufat API error:', response.status, errText);
       return new Response(JSON.stringify({ error: 'AI generation failed' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
