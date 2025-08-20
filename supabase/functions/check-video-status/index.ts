@@ -75,12 +75,13 @@ serve(async (req) => {
     }
 
     // Check status with Captions.ai API
-    const captionsResponse = await fetch(`https://api.captions.ai/api/creator/status/${jobId}`, {
-      method: 'GET',
+    const captionsResponse = await fetch('https://api.captions.ai/api/creator/poll', {
+      method: 'POST',
       headers: {
         'Authorization': captionsApiKey,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ job_id: jobId }),
     });
 
     if (!captionsResponse.ok) {

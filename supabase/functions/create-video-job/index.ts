@@ -45,19 +45,31 @@ serve(async (req) => {
       throw new Error('Captions.ai API key not configured');
     }
 
+    console.log('API Key exists:', !!captionsApiKey);
+    console.log('API Key length:', captionsApiKey?.length);
+    console.log('Script length:', script?.length);
+
     // Call Captions.ai API with the new simplified endpoint
     const captionsResponse = await fetch('https://api.captions.ai/api/creator/submit', {
       method: 'POST',
       headers: {
-        'Authorization': captionsApiKey, // API key as authorization header
+        'Authorization': `Bearer ${captionsApiKey}`, // Try with Bearer prefix
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ script }), // Send script as body
+      body: JSON.stringify({ script }),
     });
+
+    console.log('Response status:', captionsResponse.status);
+    console.log('Response headers:', Object.fromEntries(captionsResponse.headers.entries()));
 
     if (!captionsResponse.ok) {
       const errorText = await captionsResponse.text();
       console.error('Captions.ai API error:', errorText);
+      console.error('Request headers sent:', {
+        'Authorization': `Bearer ${captionsApiKey?.substring(0, 10)}...`,
+        'Content-Type': 'application/json'
+      });
+      console.error('Request body sent:', JSON.stringify({ script }));
       throw new Error(`Captions.ai API error: ${captionsResponse.status} - ${errorText}`);
     }
 
