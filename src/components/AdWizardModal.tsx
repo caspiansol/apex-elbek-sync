@@ -243,19 +243,97 @@ Write as one continuous, engaging script without section labels or formatting. M
   };
   const handleCreateVideo = async () => {
     try {
-      // Mock video creation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "Video created successfully!"
+      setIsGenerating(true);
+      
+      // Build the title from wizard data
+      const title = `${wizardData.businessName} - ${wizardData.offer}`;
+      
+      // Build the captions payload from wizard data
+      const finalAudience = wizardData.audience === 'Custom' ? wizardData.customAudience : wizardData.audience;
+      const duration = parseInt(wizardData.length.replace('s', ''));
+      
+      // Map platform to aspect ratio
+      let aspectRatio = '1:1';
+      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';
+      else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
+      
+      // Map brand voice to tone
+      const toneMap: { [key: string]: string } = {
+        'friendly-empathetic': 'friendly',
+        'professional-authoritative': 'professional',
+        'casual-relatable': 'casual',
+        'energetic-upbeat': 'energetic'
+      };
+      
+      const captionsPayload = {
+        script: generatedScript || "Generated script will appear here",
+        duration_sec: duration,
+        aspect_ratio: aspectRatio,
+        avatar: wizardData.noAvatar ? {
+          enabled: false
+        } : {
+          enabled: true,
+          gender: wizardData.avatarGender.toLowerCase(),
+          age: wizardData.avatarAge.toLowerCase(),
+          attire: wizardData.attire.toLowerCase().replace(' ', '_'),
+          setting: wizardData.setting.toLowerCase().replace(' ', '_')
+        },
+        style: {
+          tone: toneMap[wizardData.brandVoice] || 'friendly',
+          pace: "medium"
+        },
+        captions: {
+          enabled: true,
+          burn_in: true
+        },
+        music: {
+          mood: "uplifting"
+        },
+        metadata: {
+          brand: wizardData.businessName,
+          cta: wizardData.cta,
+          geo: wizardData.geoTargeting,
+          keywords: wizardData.keywords,
+          benefit: wizardData.primaryBenefit,
+          platform: wizardData.platform
+        },
+        webhook_url: `https://wcrdnljoxscotvuxsczd.supabase.co/functions/v1/captions-webhook`
+      };
+
+      // Call our edge function to create the video job
+      const { data, error } = await supabase.functions.invoke('create-video-job', {
+        body: { 
+          wizardData,
+          captionsPayload,
+          title
+        }
       });
+
+      if (error) {
+        console.error('Error creating video job:', error);
+        throw new Error(error.message || 'Failed to create video job');
+      }
+
+      console.log('Video job created:', data);
+      
+      toast({
+        title: "Rendering started!",
+        description: "Your video is being created. Check the Library to see progress."
+      });
+      
       onOpenChange(false);
       localStorage.removeItem('adWizardDraft');
       navigate('/app/library');
+      
     } catch (error) {
+      console.error('Video creation error:', error);
       toast({
         title: "Video creation failed",
+        description: error.message || "Please try again",
         variant: "destructive"
       });
+    } finally {
+      setIsGenerating(false);
     }
   };
 

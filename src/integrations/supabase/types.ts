@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      video_jobs: {
+        Row: {
+          captions_payload: Json
+          created_at: string
+          duration: number | null
+          error_message: string | null
+          id: string
+          job_id: string
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+          wizard_data: Json
+        }
+        Insert: {
+          captions_payload: Json
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          id?: string
+          job_id: string
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+          wizard_data: Json
+        }
+        Update: {
+          captions_payload?: Json
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          id?: string
+          job_id?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+          wizard_data?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
