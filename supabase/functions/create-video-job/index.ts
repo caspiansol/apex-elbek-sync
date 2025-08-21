@@ -69,7 +69,7 @@ serve(async (req) => {
 
     // Get Captions.ai API configuration
     const captionsApiKey = Deno.env.get('Captions_ai');
-    const captionsBase = Deno.env.get('CAPTIONS_API_BASE') || 'https://api.captions.ai/v1';
+    const captionsBase = Deno.env.get('CAPTIONS_API_BASE') || 'https://api.captions.ai/api/creator/submit';
     const workspaceId = Deno.env.get('CAPTIONS_WORKSPACE_ID');
 
     if (!captionsApiKey) {
@@ -94,11 +94,11 @@ serve(async (req) => {
     // Build simplified payload for Captions.ai
     const captionsPayload = {
       script: cleanScript,
-      ...(avatarName ? { avatar: { enabled: true, creator: avatarName } } : { avatar: { enabled: false } })
+      creatorName: avatarName
     };
 
     // Call Captions.ai API with correct endpoint and headers
-    const captionsResponse = await fetch(`${captionsBase}/creator/videos`, {
+    const captionsResponse = await fetch(`https://api.captions.ai/api/creator/submit`, {
       method: 'POST',
       headers,
       body: JSON.stringify(captionsPayload),
