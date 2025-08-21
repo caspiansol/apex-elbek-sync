@@ -58,31 +58,43 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
     }
 
     try {
-      // Try direct download first
-      const a = document.createElement('a');
-      a.href = job.video_url;
-      a.download = `${job.title}.mp4`;
-      a.click();
-    } catch (error) {
-      // If direct download fails, try proxy route
-      try {
-        const response = await fetch(`/api/download-video?url=${encodeURIComponent(job.video_url)}`);
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${job.title}.mp4`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      } catch (proxyError) {
-        toast({
-          title: "Download failed",
-          description: "Unable to download the video. Please try again later.",
-          variant: "destructive"
-        });
+      toast({
+        title: "Downloading...",
+        description: "Your video download is starting."
+      });
+
+      // Fetch the video as blob to ensure it downloads directly
+      const response = await fetch(job.video_url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch video');
       }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download complete",
+        description: "Video has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Unable to download the video. Please try again later.",
+        variant: "destructive"
+      });
     }
   };
 
