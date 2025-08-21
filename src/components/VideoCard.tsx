@@ -2,8 +2,9 @@ import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, Download, RefreshCw, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Play, Pause, Download, RefreshCw, Clock, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoJob {
   id: string;
@@ -23,9 +24,10 @@ interface VideoJob {
 interface VideoCardProps {
   job: VideoJob;
   onRetry: (job: VideoJob) => void;
+  onDelete: (job: VideoJob) => void;
 }
 
-const VideoCard = ({ job, onRetry }: VideoCardProps) => {
+const VideoCard = ({ job, onRetry, onDelete }: VideoCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -83,6 +85,37 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
           variant: "destructive"
         });
       }
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('video_jobs')
+        .delete()
+        .eq('id', job.id);
+
+      if (error) {
+        toast({
+          title: "Delete failed",
+          description: "Unable to delete the video. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Video deleted",
+        description: "The video has been successfully deleted."
+      });
+      
+      onDelete(job);
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: "Unable to delete the video. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -218,31 +251,59 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
               >
                 <Download className="h-3 w-3" />
               </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleDelete}
+                className="px-2"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
             </>
           )}
           
           {job.status === 'failed' && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => onRetry(job)}
-              className="flex-1"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Retry
-            </Button>
+            <>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => onRetry(job)}
+                className="flex-1"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Retry
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleDelete}
+                className="px-2"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </>
           )}
 
           {(job.status === 'queued' || job.status === 'processing') && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              disabled
-              className="flex-1"
-            >
-              <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-              {job.status === 'queued' ? 'Queued' : 'Processing'}
-            </Button>
+            <>
+              <Button 
+                size="sm" 
+                variant="outline"
+                disabled
+                className="flex-1"
+              >
+                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                {job.status === 'queued' ? 'Queued' : 'Processing'}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleDelete}
+                className="px-2"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </>
           )}
         </div>
       </CardContent>

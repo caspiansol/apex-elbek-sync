@@ -145,6 +145,10 @@ const Library = () => {
     }
   };
 
+  const handleDelete = (job: VideoJob) => {
+    setVideoJobs(prev => prev.filter(v => v.id !== job.id));
+  };
+
 
   if (loading) {
     return (
@@ -218,6 +222,7 @@ const Library = () => {
                 key={job.id} 
                 job={job} 
                 onRetry={retryJob}
+                onDelete={handleDelete}
               />
             ))}
           </div>
