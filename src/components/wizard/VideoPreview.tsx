@@ -38,7 +38,9 @@ export default function VideoPreview({ previewUrl, posterUrl, selected }: Props)
     console.log('VideoPreview: Stopping video');
     if (!ref.current) return;
     ref.current.pause();
+    // Reset to initial state and force poster to show again
     ref.current.currentTime = 0;
+    ref.current.load();
     setPlaying(false);
   };
   
