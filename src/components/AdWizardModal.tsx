@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Save, Copy, Wand2, RotateCcw, Lock, Unlock, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Copy, Wand2, RotateCcw, Lock, Unlock, FileText, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -673,7 +673,7 @@ Write as one continuous, engaging script without section labels or formatting. M
       case 6:
         return true;
       case 7:
-        return wizardData.noAvatar || !!wizardData.selectedCreator;
+        return !!wizardData.selectedCreator;
       default:
         return true;
     }
@@ -716,7 +716,7 @@ Write as one continuous, engaging script without section labels or formatting. M
                         size="sm"
                         onClick={() => setShowSaveTemplateDialog(true)}
                       >
-                        <Save className="h-4 w-4 mr-1" />
+                        <Bookmark className="h-4 w-4 mr-1" />
                         Save Template
                       </Button>
                     </>
