@@ -47,44 +47,32 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
   };
 
   const handleDownload = async () => {
-    if (!job.video_url) return;
+  const url = job.video_url;
+  if (!url) return;
 
-    if (job.video_url.includes('mock-video') || job.video_url.includes('example.com')) {
-      toast({
-        title: "Demo Mode",
-        description: "This is a demo. In production, the video would be downloaded."
-      });
-      return;
-    }
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to fetch video");
 
-    try {
-      // Try direct download first
-      const a = document.createElement('a');
-      a.href = job.video_url;
-      a.download = `${job.title}.mp4`;
-      a.click();
-    } catch (error) {
-      // If direct download fails, try proxy route
-      try {
-        const response = await fetch(`/api/download-video?url=${encodeURIComponent(job.video_url)}`);
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${job.title}.mp4`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-      } catch (proxyError) {
-        toast({
-          title: "Download failed",
-          description: "Unable to download the video. Please try again later.",
-          variant: "destructive"
-        });
-      }
-    }
-  };
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    a.download = `${job.title || 'video'}.mp4`; // Set desired file name
+    document.body.appendChild(a); // Required for Firefox
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error("Download error:", error);
+    toast({
+      title: "Download failed",
+      description: "Unable to download the video. Please try again.",
+      variant: "destructive"
+    });
+  }
+};
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
