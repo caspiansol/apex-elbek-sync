@@ -259,10 +259,17 @@ Write as one continuous, engaging script without section labels or formatting. M
         }
       };
 
+      console.log("Sending to Supabase Edge:", {
+  script: generatedScript,
+  avatarName: wizardData.noAvatar ? null : wizardData.selectedCreator,
+  title: title
+});
+
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: {
           script: generatedScript,
           avatarName: wizardData.noAvatar ? null : wizardData.selectedCreator,
+          title: title
         }
       });
 
