@@ -63,30 +63,25 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
         description: "Your video download is starting."
       });
 
-      // Fetch the video as blob to ensure it downloads directly
-      const response = await fetch(job.video_url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch video');
-      }
+      const filename = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
       
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // Use the proxy edge function for download
+      const proxyUrl = new URL('/functions/v1/download-video', 'https://wcrdnljoxscotvuxsczd.supabase.co');
+      proxyUrl.searchParams.set('url', job.video_url);
+      proxyUrl.searchParams.set('filename', filename);
       
-      // Create download link and trigger download
+      // Create download link that uses the proxy
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.href = proxyUrl.toString();
+      a.download = filename;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
-      // Clean up the blob URL
-      URL.revokeObjectURL(url);
 
       toast({
-        title: "Download complete",
-        description: "Video has been downloaded successfully."
+        title: "Download started",
+        description: "Video download has been initiated."
       });
     } catch (error) {
       console.error('Download error:', error);
