@@ -245,7 +245,15 @@ const Library = () => {
             {videoJobs.map((job) => (
               <Card key={job.id} className="overflow-hidden">
                 <CardHeader className="p-0">
-                  {job.thumbnail_url ? (
+                  {job.status === 'ready' && job.video_url ? (
+                    <video 
+                      src={job.video_url} 
+                      className="w-full h-40 object-cover"
+                      controls
+                      preload="metadata"
+                      poster={job.thumbnail_url}
+                    />
+                  ) : job.thumbnail_url ? (
                     <img 
                       src={job.thumbnail_url} 
                       alt={job.title}
