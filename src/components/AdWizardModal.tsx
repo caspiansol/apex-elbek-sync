@@ -261,7 +261,7 @@ Write as one continuous, engaging script without section labels or formatting. M
 
       const { data, error } = await supabase.functions.invoke('create-video-job', {
         body: {
-          captionsPayload.script,
+          script:captionsPayload.script,
         }
       });
 
