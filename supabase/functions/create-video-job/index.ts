@@ -40,30 +40,26 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { captionsPayload, title } = await req.json();
-    const script = captionsPayload?.script?.trim() || "";
+    const { script, avatarName, title } = await req.json();
+    const cleanScript = script?.trim() || "";
 
     console.log('Creating video job for user:', user.id);
-    console.log('Script to submit:', script);
+    console.log('Script to submit:', cleanScript);
+    console.log('Avatar name:', avatarName);
 
     // Validate script is filled, not a template
-    if (!script) {
+    if (!cleanScript) {
       throw new Error('Script is required');
     }
 
-    const looksLikeTemplate = /(\{\{.*\}\}|\{.*\}|<<.*>>|\[.*\])/.test(script);
+    const looksLikeTemplate = /(\{\{.*\}\}|\{.*\}|<<.*>>|\[.*\])/.test(cleanScript);
     if (looksLikeTemplate) {
       throw new Error('Template detected. Use FILLED script, not placeholders.');
     }
 
     // Validate creator selection
-    const creator = captionsPayload?.avatar?.creator;
-    if (!captionsPayload.avatar?.enabled) {
-      console.log('No avatar mode selected');
-    } else if (!creator || !SUPPORTED_CREATORS.includes(creator)) {
-      throw new Error(`Invalid creator selection: ${creator}. Must be one of: ${SUPPORTED_CREATORS.join(', ')}`);
-    } else {
-      console.log('Using creator:', creator);
+    if (avatarName && !SUPPORTED_CREATORS.includes(avatarName)) {
+      throw new Error(`Invalid creator selection: ${avatarName}. Must be one of: ${SUPPORTED_CREATORS.join(', ')}`);
     }
 
     // Get Captions.ai API configuration
@@ -89,6 +85,12 @@ serve(async (req) => {
     if (workspaceId) {
       headers['x-workspace-id'] = workspaceId;
     }
+
+    // Build simplified payload for Captions.ai
+    const captionsPayload = {
+      script: cleanScript,
+      ...(avatarName ? { avatar: { enabled: true, creator: avatarName } } : { avatar: { enabled: false } })
+    };
 
     // Call Captions.ai API with correct endpoint and headers
     const captionsResponse = await fetch(`${captionsBase}/creator/videos`, {
