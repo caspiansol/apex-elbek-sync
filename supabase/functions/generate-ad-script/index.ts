@@ -34,10 +34,10 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-4.1-2025-04-14',
         messages: [
-          { role: 'system', content: 'You are a world-class direct-response copywriter. Write natural, flowing ad scripts with perfect pacing and no section labels.' },
+          { role: 'system', content: 'You are a world-class direct-response copywriter. Write natural, flowing ad scripts with perfect pacing and no section labels. CRITICAL: Keep the script under 800 characters total length. Write concisely while maintaining impact.' },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: 800,
+        max_completion_tokens: 200,
       }),
     });
 
@@ -67,7 +67,17 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ generatedText }), {
+    // Validate script length (must be under 800 characters for Captions.ai)
+    const trimmedText = generatedText.trim();
+    if (trimmedText.length > 800) {
+      console.error(`Generated script too long: ${trimmedText.length} characters`);
+      return new Response(JSON.stringify({ error: `Generated script is too long (${trimmedText.length} characters). Please try a shorter prompt.` }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ generatedText: trimmedText }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
