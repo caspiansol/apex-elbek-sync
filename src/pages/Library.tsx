@@ -248,10 +248,11 @@ const Library = () => {
                   {job.status === 'ready' && job.video_url ? (
                     <video 
                       src={job.video_url} 
-                      className="w-full aspect-video object-contain bg-black"
+                      className="w-full h-full object-contain bg-black"
                       controls
                       preload="metadata"
                       poster={job.thumbnail_url}
+                      style={{ minHeight: '300px' }}
                     />
                   ) : job.thumbnail_url ? (
                     <img 
