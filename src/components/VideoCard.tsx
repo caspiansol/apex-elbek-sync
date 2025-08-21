@@ -58,38 +58,31 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
     }
 
     try {
-      toast({
-        title: "Downloading...",
-        description: "Your video download is starting."
-      });
-
-      const filename = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
-      
-      // Use the proxy edge function for download
-      const proxyUrl = new URL('/functions/v1/download-video', 'https://wcrdnljoxscotvuxsczd.supabase.co');
-      proxyUrl.searchParams.set('url', job.video_url);
-      proxyUrl.searchParams.set('filename', filename);
-      
-      // Create download link that uses the proxy
+      // Try direct download first
       const a = document.createElement('a');
-      a.href = proxyUrl.toString();
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
+      a.href = job.video_url;
+      a.download = `${job.title}.mp4`;
       a.click();
-      document.body.removeChild(a);
-
-      toast({
-        title: "Download started",
-        description: "Video download has been initiated."
-      });
     } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download failed",
-        description: "Unable to download the video. Please try again later.",
-        variant: "destructive"
-      });
+      // If direct download fails, try proxy route
+      try {
+        const response = await fetch(`/api/download-video?url=${encodeURIComponent(job.video_url)}`);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${job.title}.mp4`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (proxyError) {
+        toast({
+          title: "Download failed",
+          description: "Unable to download the video. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
