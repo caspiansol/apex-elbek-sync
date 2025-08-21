@@ -171,7 +171,7 @@ Write as one continuous, engaging script without section labels or formatting. M
     const captionsPayload = {
       script: generatedScript || "Generated script will appear here",
       duration_sec: parseInt(wizardData.length.replace('s', '')),
-      aspect_ratio: wizardData.platform.includes('9:16') ? '9:16' : wizardData.platform.includes('16:9') ? '16:9' : '1:1',
+      aspect_ratio: '9:16', // Default to vertical format
       style: {
         tone: wizardData.brandVoice.toLowerCase().replace(' & ', '_'),
         pace: "medium"
@@ -281,10 +281,8 @@ Write as one continuous, engaging script without section labels or formatting. M
       const finalAudience = wizardData.audience === 'Custom' ? wizardData.customAudience : wizardData.audience;
       const duration = parseInt(wizardData.length.replace('s', ''));
 
-      // Map platform to aspect ratio
-      let aspectRatio = '1:1';
-      if (wizardData.platform.includes('9:16')) aspectRatio = '9:16';
-      else if (wizardData.platform.includes('16:9')) aspectRatio = '16:9';
+      // Default to 9:16 (vertical/reels format)
+      const aspectRatio = '9:16';
 
       const captionsPayload = {
         script: generatedScript,
@@ -316,7 +314,7 @@ Write as one continuous, engaging script without section labels or formatting. M
           geo: wizardData.geoTargeting,
           keywords: wizardData.keywords,
           benefit: wizardData.primaryBenefit,
-          platform: wizardData.platform
+          platform: 'vertical' // Default format
         }
       };
 
@@ -526,22 +524,6 @@ Write as one continuous, engaging script without section labels or formatting. M
                   <SelectItem value="sign-up">Sign up</SelectItem>
                   <SelectItem value="book-call">Book call</SelectItem>
                   <SelectItem value="message-us">Message us</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="platform">Platform & aspect</Label>
-              <Select value={wizardData.platform} onValueChange={value => setWizardData({
-              ...wizardData,
-              platform: value
-            })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="IG Reels 9:16">IG Reels 9:16</SelectItem>
-                  <SelectItem value="FB Feed 1:1">FB Feed 1:1</SelectItem>
-                  <SelectItem value="YouTube 16:9">YouTube 16:9</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -796,7 +778,7 @@ Write as one continuous, engaging script without section labels or formatting. M
         return null;
     }
   };
-  const stepTitles = ["Brand & Tone", "Offer & Key Benefit", "Audience & Pain", "Outcome & Proof", "Goal & Platform", "Location & Keywords", "Visuals (Avatar/B-roll)", "Review & Generate"];
+  const stepTitles = ["Brand & Tone", "Offer & Key Benefit", "Audience & Pain", "Outcome & Proof", "Goal & Length", "Location & Keywords", "Visuals (Avatar/B-roll)", "Review & Generate"];
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -808,7 +790,7 @@ Write as one continuous, engaging script without section labels or formatting. M
       case 4:
         return wizardData.outcome;
       case 5:
-        return wizardData.cta && wizardData.platform && wizardData.length;
+        return wizardData.cta && wizardData.length;
       case 6:
         return true;
       // Optional fields
