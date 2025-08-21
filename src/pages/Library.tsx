@@ -90,6 +90,21 @@ const Library = () => {
     initializeLibrary();
   }, [loadVideoJobs, checkPendingJobs]);
 
+  // Auto-poll pending jobs every 5 seconds
+  useEffect(() => {
+    const hasPendingJobs = videoJobs.some(job => 
+      job.status === 'queued' || job.status === 'processing'
+    );
+
+    if (!hasPendingJobs) return;
+
+    const interval = setInterval(() => {
+      checkPendingJobs();
+    }, 5000); // 5 seconds
+
+    return () => clearInterval(interval);
+  }, [videoJobs, checkPendingJobs]);
+
   // Retry failed job
   const retryJob = async (job: VideoJob) => {
     try {
