@@ -57,6 +57,11 @@ serve(async (req) => {
       throw new Error('Template detected. Use FILLED script, not placeholders.');
     }
 
+    // Validate script length (Captions.ai has 800 character limit)
+    if (cleanScript.length > 800) {
+      throw new Error(`Script is too long (${cleanScript.length} characters). Maximum allowed is 800 characters.`);
+    }
+
     // Validate creator selection
     if (avatarName && !SUPPORTED_CREATORS.includes(avatarName)) {
       throw new Error(`Invalid creator selection: ${avatarName}. Must be one of: ${SUPPORTED_CREATORS.join(', ')}`);
