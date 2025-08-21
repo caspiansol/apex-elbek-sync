@@ -135,7 +135,7 @@ CALL TO ACTION: ${wizardData.cta}
 
 Create a smooth, natural-flowing ${duration}-second video script that feels conversational and authentic. The script should grab attention immediately, clearly present the problem and solution, include credibility elements, and end with a strong call to action. 
 
-CRITICAL TIMING: This must be exactly ${duration} seconds when read at normal speaking pace (approximately 2.5 words per second, so ${duration * 2.5} words total). Count your words carefully.
+CRITICAL TIMING: This must be exactly ${duration} seconds when read at normal speaking pace. Count your words carefully. Captions.ai has strict policy of maximum of 800 characters with spaces
 
 Write as one continuous, engaging script without section labels or formatting. Make it sound like a real person talking directly to the viewer, not like marketing copy.`;
 
