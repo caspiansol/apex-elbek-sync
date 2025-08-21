@@ -83,10 +83,13 @@ serve(async (req) => {
         checkedCount++;
         console.log(`Checking status for job: ${job.job_id}`);
 
-        // Call Captions.ai status endpoint
-        const statusResponse = await fetch(`${captionsBase}/creator/videos/${job.job_id}/status`, {
-          method: 'GET',
+        // Call Captions.ai poll endpoint
+        const statusResponse = await fetch(`https://api.captions.ai/api/creator/poll`, {
+          method: 'POST',
           headers,
+          body: JSON.stringify({
+            operationId: job.job_id
+          })
         });
 
         if (!statusResponse.ok) {
@@ -101,13 +104,13 @@ serve(async (req) => {
         let shouldUpdate = false;
         const updateData: any = {};
 
-        if (statusData.status === 'completed' || statusData.status === 'ready') {
+        if (statusData.state === 'COMPLETE') {
           shouldUpdate = true;
           updateData.status = 'ready';
           updateData.video_url = statusData.video_url || statusData.url;
           updateData.thumbnail_url = statusData.thumbnail_url || statusData.thumbnail;
           updateData.duration = statusData.duration;
-        } else if (statusData.status === 'failed' || statusData.status === 'error') {
+        } else if (statusData.state === 'FAILED' || statusData.state === 'ERROR') {
           shouldUpdate = true;
           updateData.status = 'failed';
           updateData.error_message = statusData.error || statusData.message || 'Video generation failed';
