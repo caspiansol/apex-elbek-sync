@@ -47,32 +47,56 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
   };
 
   const handleDownload = async () => {
-  const url = job.video_url;
-  if (!url) return;
+    if (!job.video_url) return;
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Failed to fetch video");
+    if (job.video_url.includes('mock-video') || job.video_url.includes('example.com')) {
+      toast({
+        title: "Demo Mode",
+        description: "This is a demo. In production, the video would be downloaded."
+      });
+      return;
+    }
 
-    const blob = await response.blob();
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = `${job.title || 'video'}.mp4`; // Set desired file name
-    document.body.appendChild(a); // Required for Firefox
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(downloadUrl);
-  } catch (error) {
-    console.error("Download error:", error);
-    toast({
-      title: "Download failed",
-      description: "Unable to download the video. Please try again.",
-      variant: "destructive"
-    });
-  }
-};
+    try {
+      toast({
+        title: "Downloading...",
+        description: "Your video download is starting."
+      });
 
+      // Fetch the video as blob to ensure it downloads directly
+      const response = await fetch(job.video_url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch video');
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download complete",
+        description: "Video has been downloaded successfully."
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Unable to download the video. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
