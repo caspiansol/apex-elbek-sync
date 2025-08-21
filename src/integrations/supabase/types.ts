@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          payload: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          payload: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_jobs: {
         Row: {
           captions_payload: Json

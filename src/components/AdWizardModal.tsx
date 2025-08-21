@@ -10,12 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Save, Copy, Wand2, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, Copy, Wand2, RotateCcw, Lock, Unlock, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PLACEHOLDER_STYLES, PlaceholderStyle } from "@/lib/placeholder-utils";
 import { Step7Characters } from "@/components/wizard/Step7Characters";
+import { TemplatesDialog } from "@/components/TemplatesDialog";
+import { SaveTemplateDialog } from "@/components/SaveTemplateDialog";
+import { AdTemplate } from "@/types/adTemplate";
+import { extractTemplateFromState, applyTemplateToState } from "@/lib/template";
 
 interface AdWizardModalProps {
   open: boolean;
@@ -29,6 +33,9 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
   const [generatedScript, setGeneratedScript] = useState<string>("");
   const [placeholderStyle, setPlaceholderStyle] = useState<PlaceholderStyle>('double-curly');
   const [showFilledVersion, setShowFilledVersion] = useState(true);
+  const [templates, setTemplates] = useState<AdTemplate[]>([]);
+  const [showTemplatesDialog, setShowTemplatesDialog] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -50,11 +57,33 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
     geoTargeting: '',
     keywords: '',
     selectedCreator: '',
-    noAvatar: false
+    noAvatar: false,
+    templateLocked: false,
+    templateName: null as string | null
   });
 
   const totalSteps = 8;
   const progress = currentStep / totalSteps * 100;
+
+  // Load templates
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('templates', {
+        method: 'GET'
+      });
+
+      if (error) throw error;
+      setTemplates(data?.templates || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      loadTemplates();
+    }
+  }, [open]);
 
   const saveDraft = () => {
     localStorage.setItem('adWizardDraft', JSON.stringify({
@@ -74,6 +103,7 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
         setWizardData(savedData);
         setCurrentStep(savedStep);
       }
+      loadTemplates();
     }
   }, [open]);
 
@@ -85,6 +115,8 @@ const AdWizardModal = ({ open, onOpenChange }: AdWizardModalProps) => {
     onOpenChange(false);
     setCurrentStep(1);
     setGeneratedContent(null);
+    setShowTemplatesDialog(false);
+    setShowSaveTemplateDialog(false);
   };
 
   const generatePrompts = () => {
@@ -276,7 +308,9 @@ Write as one continuous, engaging script without section labels or formatting. M
       geoTargeting: '',
       keywords: '',
       selectedCreator: '',
-      noAvatar: false
+      noAvatar: false,
+      templateLocked: false,
+      templateName: null
     });
     setCurrentStep(1);
     setGeneratedContent(null);
@@ -289,23 +323,58 @@ Write as one continuous, engaging script without section labels or formatting. M
     });
   };
 
+  const handleTemplateApplied = (template: AdTemplate) => {
+    setWizardData(prev => applyTemplateToState(prev, template.payload, template.name));
+    toast({
+      title: "Template applied",
+      description: "Only character selection can be changed.",
+    });
+  };
+
+  const handleUnlock = () => {
+    setWizardData(prev => ({
+      ...prev,
+      templateLocked: false,
+      templateName: null
+    }));
+    toast({
+      title: "Template unlocked",
+      description: "You can now edit all fields.",
+    });
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="brand">Business Name</Label>
-              <Input id="brand" value={wizardData.brand} onChange={e => setWizardData({
-              ...wizardData,
-              brand: e.target.value
-            })} placeholder="e.g., Acme Insurance" />
+              <Input 
+                id="brand" 
+                value={wizardData.brand} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  brand: e.target.value
+                })} 
+                placeholder="e.g., Acme Insurance"
+                disabled={wizardData.templateLocked}
+              />
             </div>
             <div>
               <Label htmlFor="brandVoice">Brand Voice</Label>
-              <Select value={wizardData.brandVoice} onValueChange={value => setWizardData({
-              ...wizardData,
-              brandVoice: value
-            })}>
+              <Select 
+                value={wizardData.brandVoice} 
+                onValueChange={value => setWizardData({
+                  ...wizardData,
+                  brandVoice: value
+                })}
+                disabled={wizardData.templateLocked}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select brand voice" />
                 </SelectTrigger>
@@ -320,19 +389,34 @@ Write as one continuous, engaging script without section labels or formatting. M
           </div>;
       case 2:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="offer">What are you promoting?</Label>
-              <Input id="offer" value={wizardData.offer} onChange={e => setWizardData({
-              ...wizardData,
-              offer: e.target.value
-            })} placeholder="e.g., Auto insurance quotes" />
+              <Input 
+                id="offer" 
+                value={wizardData.offer} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  offer: e.target.value
+                })} 
+                placeholder="e.g., Auto insurance quotes"
+                disabled={wizardData.templateLocked}
+              />
             </div>
             <div>
               <Label htmlFor="primaryBenefit">Primary Benefit</Label>
-              <Select value={wizardData.primaryBenefit} onValueChange={value => setWizardData({
-              ...wizardData,
-              primaryBenefit: value
-            })}>
+              <Select 
+                value={wizardData.primaryBenefit} 
+                onValueChange={value => setWizardData({
+                  ...wizardData,
+                  primaryBenefit: value
+                })}
+                disabled={wizardData.templateLocked}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select primary benefit" />
                 </SelectTrigger>
@@ -348,57 +432,105 @@ Write as one continuous, engaging script without section labels or formatting. M
           </div>;
       case 3:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="audience">Who is this for?</Label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {['Families', 'Self-employed', 'SMB owners', 'Seniors', 'Local residents', 'Custom'].map(option => <Badge key={option} variant={wizardData.audience === option ? "default" : "outline"} className="cursor-pointer" onClick={() => setWizardData({
-                ...wizardData,
-                audience: option
-              })}>
+                {['Families', 'Self-employed', 'SMB owners', 'Seniors', 'Local residents', 'Custom'].map(option => <Badge 
+                  key={option} 
+                  variant={wizardData.audience === option ? "default" : "outline"} 
+                  className={`cursor-pointer ${wizardData.templateLocked ? 'opacity-50' : ''}`} 
+                  onClick={() => !wizardData.templateLocked && setWizardData({
+                    ...wizardData,
+                    audience: option
+                  })}
+                >
                     {option}
                   </Badge>)}
               </div>
               {wizardData.audience === 'Custom' && <div className="mt-4">
                   <Label htmlFor="customAudience">Describe your custom audience</Label>
-                  <Input id="customAudience" value={wizardData.customAudience} onChange={e => setWizardData({
-                ...wizardData,
-                customAudience: e.target.value
-              })} placeholder="e.g., Young professionals aged 25-35 in urban areas" />
+                  <Input 
+                    id="customAudience" 
+                    value={wizardData.customAudience} 
+                    onChange={e => setWizardData({
+                      ...wizardData,
+                      customAudience: e.target.value
+                    })} 
+                    placeholder="e.g., Young professionals aged 25-35 in urban areas"
+                    disabled={wizardData.templateLocked}
+                  />
                 </div>}
             </div>
             <div>
               <Label htmlFor="painPoint">Biggest pain or worry (one sentence)</Label>
-              <Textarea id="painPoint" value={wizardData.painPoint} onChange={e => setWizardData({
-              ...wizardData,
-              painPoint: e.target.value
-            })} placeholder="e.g., Paying too much for car insurance with poor coverage" />
+              <Textarea 
+                id="painPoint" 
+                value={wizardData.painPoint} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  painPoint: e.target.value
+                })} 
+                placeholder="e.g., Paying too much for car insurance with poor coverage"
+                disabled={wizardData.templateLocked}
+              />
             </div>
           </div>;
       case 4:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="outcome">After state (one sentence)</Label>
-              <Textarea id="outcome" value={wizardData.outcome} onChange={e => setWizardData({
-              ...wizardData,
-              outcome: e.target.value
-            })} placeholder="e.g., Save hundreds while getting better coverage and peace of mind" />
+              <Textarea 
+                id="outcome" 
+                value={wizardData.outcome} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  outcome: e.target.value
+                })} 
+                placeholder="e.g., Save hundreds while getting better coverage and peace of mind"
+                disabled={wizardData.templateLocked}
+              />
             </div>
             <div>
               <Label htmlFor="proof">Proof point (optional)</Label>
-              <Input id="proof" value={wizardData.proof} onChange={e => setWizardData({
-              ...wizardData,
-              proof: e.target.value
-            })} placeholder="e.g., 25 years in business, A+ rating, licensed in all 50 states" />
+              <Input 
+                id="proof" 
+                value={wizardData.proof} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  proof: e.target.value
+                })} 
+                placeholder="e.g., 25 years in business, A+ rating, licensed in all 50 states"
+                disabled={wizardData.templateLocked}
+              />
             </div>
           </div>;
       case 5:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="cta">Single CTA</Label>
-              <Select value={wizardData.cta} onValueChange={value => setWizardData({
-              ...wizardData,
-              cta: value
-            })}>
+              <Select 
+                value={wizardData.cta} 
+                onValueChange={value => setWizardData({
+                  ...wizardData,
+                  cta: value
+                })}
+                disabled={wizardData.templateLocked}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select call to action" />
                 </SelectTrigger>
@@ -413,10 +545,14 @@ Write as one continuous, engaging script without section labels or formatting. M
             </div>
             <div>
               <Label htmlFor="length">Length</Label>
-              <Select value={wizardData.length} onValueChange={value => setWizardData({
-              ...wizardData,
-              length: value
-            })}>
+              <Select 
+                value={wizardData.length} 
+                onValueChange={value => setWizardData({
+                  ...wizardData,
+                  length: value
+                })}
+                disabled={wizardData.templateLocked}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select length" />
                 </SelectTrigger>
@@ -430,19 +566,36 @@ Write as one continuous, engaging script without section labels or formatting. M
           </div>;
       case 6:
         return <div className="space-y-4">
+            {wizardData.templateLocked && (
+              <div className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                Using template '{wizardData.templateName}'. <Button variant="link" className="p-0 h-auto" onClick={handleUnlock}>Unlock</Button> to edit.
+              </div>
+            )}
             <div>
               <Label htmlFor="geoTargeting">Geo targeting</Label>
-              <Input id="geoTargeting" value={wizardData.geoTargeting} onChange={e => setWizardData({
-              ...wizardData,
-              geoTargeting: e.target.value
-            })} placeholder="e.g., California, Texas, New York" />
+              <Input 
+                id="geoTargeting" 
+                value={wizardData.geoTargeting} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  geoTargeting: e.target.value
+                })} 
+                placeholder="e.g., California, Texas, New York"
+                disabled={wizardData.templateLocked}
+              />
             </div>
             <div>
               <Label htmlFor="keywords">Must-include words/phrases</Label>
-              <Input id="keywords" value={wizardData.keywords} onChange={e => setWizardData({
-              ...wizardData,
-              keywords: e.target.value
-            })} placeholder="e.g., licensed, insured, certified" />
+              <Input 
+                id="keywords" 
+                value={wizardData.keywords} 
+                onChange={e => setWizardData({
+                  ...wizardData,
+                  keywords: e.target.value
+                })} 
+                placeholder="e.g., licensed, insured, certified"
+                disabled={wizardData.templateLocked}
+              />
             </div>
           </div>;
       case 7:
@@ -520,26 +673,66 @@ Write as one continuous, engaging script without section labels or formatting. M
         <DialogHeader>
           <div className="flex items-center justify-between pt-2">
             <DialogTitle>Ad Wizard - {stepTitles[currentStep - 1]}</DialogTitle>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="mx-0 py-0 my-[10px]" aria-label="Reset wizard">
-                  <RotateCcw className="h-4 w-4 mr-1" />
-                  Reset
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Reset all answers and start over?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will clear all your answers and saved drafts. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex items-center gap-2">
+              {/* Show template buttons on steps 1-7 */}
+              {currentStep <= 7 && (
+                <>
+                  {wizardData.templateLocked ? (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Template: {wizardData.templateName}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 ml-1"
+                        onClick={() => setShowTemplatesDialog(true)}
+                      >
+                        Switch
+                      </Button>
+                    </Badge>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowTemplatesDialog(true)}
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        Templates ({templates.length})
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSaveTemplateDialog(true)}
+                      >
+                        <Save className="h-4 w-4 mr-1" />
+                        Save Template
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="mx-0 py-0 my-[10px]" aria-label="Reset wizard">
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    Reset
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset all answers and start over?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will clear all your answers and saved drafts. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReset}>Reset</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -584,6 +777,22 @@ Write as one continuous, engaging script without section labels or formatting. M
                 </>}
             </Button>}
         </div>
+
+        {/* Template Dialogs */}
+        <TemplatesDialog
+          open={showTemplatesDialog}
+          onOpenChange={setShowTemplatesDialog}
+          templates={templates}
+          onTemplateApplied={handleTemplateApplied}
+          onTemplatesChanged={loadTemplates}
+        />
+        
+        <SaveTemplateDialog
+          open={showSaveTemplateDialog}
+          onOpenChange={setShowSaveTemplateDialog}
+          payload={extractTemplateFromState(wizardData)}
+          onTemplateSaved={loadTemplates}
+        />
       </DialogContent>
     </Dialog>;
 };
