@@ -85,7 +85,7 @@ const Landing = () => {
             </div>
             
             <p className="text-sm text-muted-foreground">
-              Powered by Captions.ai + ElevenLabs • Exports for Reels, Facebook, YouTube
+              Powered by Captions.ai
             </p>
           </Card>
         </motion.div>
