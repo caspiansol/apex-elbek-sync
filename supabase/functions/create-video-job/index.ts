@@ -122,15 +122,22 @@ serve(async (req) => {
     const captionsData = await captionsResponse.json();
     console.log('Captions.ai response:', captionsData);
 
-    // Extract job ID from response
-    const jobId = captionsData.job_id || captionsData.id || `job_${Date.now()}`;
+    // Extract operationId from response (this is what we'll use for polling)
+    const operationId = captionsData.operationId || captionsData.job_id || captionsData.id;
+    
+    if (!operationId) {
+      console.error('No operationId found in response:', captionsData);
+      throw new Error('Failed to get operation ID from Captions.ai');
+    }
+    
+    console.log('Extracted operationId:', operationId);
 
     // Store job in database with processing status
     const { data: videoJob, error: dbError } = await supabase
       .from('video_jobs')
       .insert({
         user_id: user.id,
-        job_id: jobId,
+        job_id: operationId,
         title: title || 'AI Video',
         status: 'processing',
         wizard_data: captionsPayload,
@@ -145,7 +152,7 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      job_id: jobId,
+      job_id: operationId,
       video_id: videoJob.id,
       status: 'processing'
     }), {

@@ -107,8 +107,8 @@ serve(async (req) => {
         if (statusData.state === 'COMPLETE') {
           shouldUpdate = true;
           updateData.status = 'ready';
-          updateData.video_url = statusData.video_url || statusData.url;
-          updateData.thumbnail_url = statusData.thumbnail_url || statusData.thumbnail;
+          updateData.video_url = statusData.url || statusData.video_url;
+          updateData.thumbnail_url = statusData.thumbnail || statusData.thumbnail_url;
           updateData.duration = statusData.duration;
         } else if (statusData.state === 'FAILED' || statusData.state === 'ERROR') {
           shouldUpdate = true;
