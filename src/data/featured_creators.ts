@@ -1,5 +1,6 @@
 // src/data/featured_creators.ts
 import { SUPPORTED_CREATORS, THUMBNAILS } from "@/data/captions_characters";
+import { CREATOR_VIDEO_URLS } from "@/data/creator_videos";
 
 const BASE_CHOICES = [
   "alan","cam","carter","douglas","jason","leah","madison","monica","violet"
@@ -21,6 +22,6 @@ function resolveCreator(base: string): string | null {
 export const FEATURED_CREATORS: string[] =
   BASE_CHOICES.map(resolveCreator).filter(Boolean) as string[];
 
-// Preview helpers from Captions CDN (you can override with Drive later if desired)
+// Preview helpers with explicit override mapping
 export const getPosterFor  = (name: string) => THUMBNAILS[name]?.imageUrl ?? "";
-export const getPreviewFor = (name: string) => THUMBNAILS[name]?.videoUrl  ?? "";
+export const getPreviewFor = (name: string) => CREATOR_VIDEO_URLS[name] || THUMBNAILS[name]?.videoUrl || "";
