@@ -58,51 +58,31 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
     }
 
     try {
-      toast({
-        title: "Downloading...",
-        description: "Your video download is starting."
-      });
-
-      const filename = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
-      
-      // Use the Supabase edge function to proxy the download
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { data, error } = await supabase.functions.invoke('download-video', {
-        body: { 
-          video_url: job.video_url,
-          filename: filename
-        }
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Create blob from response and trigger download
-      const blob = new Blob([data], { type: 'video/mp4' });
-      const url = URL.createObjectURL(blob);
-      
+      // Try direct download first
       const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
+      a.href = job.video_url;
+      a.download = `${job.title}.mp4`;
       a.click();
-      document.body.removeChild(a);
-      
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download complete",
-        description: "Video has been downloaded successfully."
-      });
     } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download failed",
-        description: "Unable to download the video. Please try again later.",
-        variant: "destructive"
-      });
+      // If direct download fails, try proxy route
+      try {
+        const response = await fetch(`/api/download-video?url=${encodeURIComponent(job.video_url)}`);
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${job.title}.mp4`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } catch (proxyError) {
+        toast({
+          title: "Download failed",
+          description: "Unable to download the video. Please try again later.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
