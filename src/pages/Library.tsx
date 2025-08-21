@@ -243,12 +243,12 @@ const Library = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videoJobs.map((job) => (
-              <Card key={job.id} className="overflow-hidden">
-                <CardHeader className="p-0">
+              <Card key={job.id} className="overflow-hidden flex flex-col h-[500px]">
+                <CardHeader className="p-0 flex-1">
                   {job.status === 'ready' && job.video_url ? (
                     <video 
                       src={job.video_url} 
-                      className="w-full aspect-video object-contain bg-black"
+                      className="w-full h-full object-contain bg-black"
                       controls
                       preload="metadata"
                       poster={job.thumbnail_url}
@@ -257,10 +257,10 @@ const Library = () => {
                     <img 
                       src={job.thumbnail_url} 
                       alt={job.title}
-                      className="w-full h-40 object-cover"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-40 bg-muted flex items-center justify-center">
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
                       {job.status === 'processing' ? (
                         <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                       ) : (
