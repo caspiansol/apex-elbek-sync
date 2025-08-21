@@ -19,14 +19,23 @@ export default function VideoPreview({ previewUrl, posterUrl, selected }: Props)
   }, [previewUrl]);
 
   const play = async () => {
+    console.log('VideoPreview: Attempting to play video:', previewUrl);
     try {
-      if (!ref.current) return;
+      if (!ref.current) {
+        console.log('VideoPreview: No video ref available');
+        return;
+      }
+      console.log('VideoPreview: Video element ready, calling play()');
       await ref.current.play();
       setPlaying(true);
-    } catch { /* autoplay may be blocked on some devices */ }
+      console.log('VideoPreview: Video playing successfully');
+    } catch (error) {
+      console.error('VideoPreview: Error playing video:', error);
+    }
   };
   
   const stop = () => {
+    console.log('VideoPreview: Stopping video');
     if (!ref.current) return;
     ref.current.pause();
     ref.current.currentTime = 0;
@@ -39,9 +48,19 @@ export default function VideoPreview({ previewUrl, posterUrl, selected }: Props)
     <div
       className={`relative w-full h-full overflow-hidden rounded-lg
                   aspect-[9/16] bg-muted ${selected ? "ring-2 ring-primary" : ""}`}
-      onMouseEnter={play}
-      onMouseLeave={stop}
-      onTouchStart={(e) => { e.preventDefault(); toggle(); }} // tap to preview on mobile
+      onMouseEnter={() => {
+        console.log('VideoPreview: Mouse enter event triggered');
+        play();
+      }}
+      onMouseLeave={() => {
+        console.log('VideoPreview: Mouse leave event triggered');
+        stop();
+      }}
+      onTouchStart={(e) => { 
+        console.log('VideoPreview: Touch start event triggered');
+        e.preventDefault(); 
+        toggle(); 
+      }}
     >
       <video
         ref={ref}
@@ -53,6 +72,10 @@ export default function VideoPreview({ previewUrl, posterUrl, selected }: Props)
         preload="metadata"
         controls={false}
         className="h-full w-full object-cover"
+        onLoadStart={() => console.log('VideoPreview: Video load started')}
+        onLoadedData={() => console.log('VideoPreview: Video data loaded')}
+        onError={(e) => console.error('VideoPreview: Video error:', e)}
+        onCanPlay={() => console.log('VideoPreview: Video can play')}
       />
       {/* subtle overlay that fades when playing */}
       <div
