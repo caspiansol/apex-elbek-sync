@@ -63,25 +63,33 @@ const VideoCard = ({ job, onRetry }: VideoCardProps) => {
         description: "Your video download is starting."
       });
 
-      // Fetch the video as blob to ensure it downloads directly
-      const response = await fetch(job.video_url);
-      if (!response.ok) {
-        throw new Error('Failed to fetch video');
-      }
+      const filename = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
       
-      const blob = await response.blob();
+      // Use the Supabase edge function to proxy the download
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('download-video', {
+        body: { 
+          video_url: job.video_url,
+          filename: filename
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Create blob from response and trigger download
+      const blob = new Blob([data], { type: 'video/mp4' });
       const url = URL.createObjectURL(blob);
       
-      // Create download link and trigger download
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${job.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4`;
+      a.download = filename;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       
-      // Clean up the blob URL
       URL.revokeObjectURL(url);
 
       toast({
