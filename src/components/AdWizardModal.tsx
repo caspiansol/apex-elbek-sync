@@ -263,7 +263,6 @@ Write as one continuous, engaging script without section labels or formatting. M
         body: {
           script: generatedScript,
           avatarName: wizardData.noAvatar ? null : wizardData.selectedCreator,
-          title: title
         }
       });
 
