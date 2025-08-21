@@ -241,18 +241,17 @@ const Library = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videoJobs.map((job) => (
               <Card key={job.id} className="overflow-hidden">
                 <CardHeader className="p-0">
                   {job.status === 'ready' && job.video_url ? (
                     <video 
                       src={job.video_url} 
-                      className="w-full h-full object-contain bg-black"
+                      className="w-full aspect-video object-contain bg-black"
                       controls
                       preload="metadata"
                       poster={job.thumbnail_url}
-                      style={{ minHeight: '300px' }}
                     />
                   ) : job.thumbnail_url ? (
                     <img 
