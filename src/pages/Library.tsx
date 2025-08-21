@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdWizardModal from "@/components/AdWizardModal";
-import { Plus, Play, Download, RotateCcw, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import VideoCard from "@/components/VideoCard";
+import { Plus, RefreshCw } from "lucide-react";
 
 interface VideoJob {
   id: string;
@@ -145,35 +145,6 @@ const Library = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'queued':
-        return <Clock className="h-4 w-4" />;
-      case 'processing':
-        return <RefreshCw className="h-4 w-4 animate-spin" />;
-      case 'ready':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status) {
-      case 'queued':
-        return 'secondary';
-      case 'processing':
-        return 'default';
-      case 'ready':
-        return 'outline'; // Using outline for success since there's no success variant
-      case 'failed':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
 
   if (loading) {
     return (
@@ -183,16 +154,16 @@ const Library = () => {
             <h1 className="text-3xl font-bold">My Videos</h1>
             <div className="text-muted-foreground">Loading...</div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-40 w-full" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map(i => (
+              <Card key={i} className="overflow-hidden">
+                <div className="aspect-[9/16] bg-muted">
+                  <Skeleton className="w-full h-full" />
+                </div>
+                <div className="p-3">
+                  <Skeleton className="h-3 w-3/4 mb-1" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
               </Card>
             ))}
           </div>
@@ -241,129 +212,13 @@ const Library = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {videoJobs.map((job) => (
-              <Card key={job.id} className="overflow-hidden">
-                <CardHeader className="p-0">
-                  {job.status === 'ready' && job.video_url ? (
-                    <video 
-                      src={job.video_url} 
-                      className="w-full aspect-video object-contain bg-black"
-                      controls
-                      preload="metadata"
-                      poster={job.thumbnail_url}
-                    />
-                  ) : job.thumbnail_url ? (
-                    <img 
-                      src={job.thumbnail_url} 
-                      alt={job.title}
-                      className="w-full h-40 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-40 bg-muted flex items-center justify-center">
-                      {job.status === 'processing' ? (
-                        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                      ) : (
-                        <div className="text-muted-foreground text-center">
-                          <div className="text-sm font-medium">{job.title}</div>
-                          <div className="text-xs mt-1 capitalize">{job.status}</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-sm line-clamp-2">{job.title}</h3>
-                    <Badge variant={getStatusVariant(job.status)} className="ml-2 shrink-0">
-                      <div className="flex items-center gap-1">
-                        {getStatusIcon(job.status)}
-                        <span className="capitalize">{job.status}</span>
-                      </div>
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground mb-3">
-                    Created {new Date(job.created_at).toLocaleDateString()}
-                    {job.duration && (
-                      <span className="ml-2">• {job.duration}s</span>
-                    )}
-                  </div>
-
-                  {job.error_message && (
-                    <div className="text-xs text-destructive mb-3 p-2 bg-destructive/10 rounded">
-                      {job.error_message}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    {job.status === 'ready' && job.video_url && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          onClick={() => {
-                            if (job.video_url?.includes('mock-video') || job.video_url?.includes('example.com')) {
-                              toast({
-                                title: "Demo Video Ready",
-                                description: "This is a demo video. In production, this would be your generated video."
-                              });
-                            } else {
-                              window.open(job.video_url, '_blank');
-                            }
-                          }}
-                          className="flex-1"
-                        >
-                          <Play className="h-4 w-4 mr-1" />
-                          {job.video_url?.includes('mock-video') || job.video_url?.includes('example.com') ? 'View Demo' : 'Play'}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            if (job.video_url?.includes('mock-video') || job.video_url?.includes('example.com')) {
-                              toast({
-                                title: "Demo Mode",
-                                description: "This is a demo. In production, the video would be downloaded."
-                              });
-                            } else {
-                              const a = document.createElement('a');
-                              a.href = job.video_url!;
-                              a.download = `${job.title}.mp4`;
-                              a.click();
-                            }
-                          }}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                    
-                    {job.status === 'failed' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => retryJob(job)}
-                        className="flex-1"
-                      >
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Retry
-                      </Button>
-                    )}
-
-                    {(job.status === 'queued' || job.status === 'processing') && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        disabled
-                        className="flex-1"
-                      >
-                        <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
-                        {job.status === 'queued' ? 'Queued' : 'Processing'}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <VideoCard 
+                key={job.id} 
+                job={job} 
+                onRetry={retryJob}
+              />
             ))}
           </div>
         )}
