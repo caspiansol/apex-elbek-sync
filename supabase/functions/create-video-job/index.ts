@@ -2,6 +2,12 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Supported creators from Captions.ai
+const SUPPORTED_CREATORS = [
+  "Alan-1", "Cam-1", "Carter-1", "Douglas-1", "Jason", 
+  "Leah-1", "Madison-1", "Monica-1", "Violet-1"
+];
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -48,6 +54,16 @@ serve(async (req) => {
     const looksLikeTemplate = /(\{\{.*\}\}|\{.*\}|<<.*>>|\[.*\])/.test(script);
     if (looksLikeTemplate) {
       throw new Error('Template detected. Use FILLED script, not placeholders.');
+    }
+
+    // Validate creator selection
+    const creator = captionsPayload?.avatar?.creator;
+    if (!captionsPayload.avatar?.enabled) {
+      console.log('No avatar mode selected');
+    } else if (!creator || !SUPPORTED_CREATORS.includes(creator)) {
+      throw new Error(`Invalid creator selection: ${creator}. Must be one of: ${SUPPORTED_CREATORS.join(', ')}`);
+    } else {
+      console.log('Using creator:', creator);
     }
 
     // Get Captions.ai API configuration
