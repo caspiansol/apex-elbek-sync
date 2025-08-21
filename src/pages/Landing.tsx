@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowRight, Sparkles, MessageSquare, Settings, Download, Play } from "lucide-react";
+
+import { ArrowRight, Sparkles, MessageSquare, Settings, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import AdWizardModal from "@/components/AdWizardModal";
 const Landing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adWizardOpen, setAdWizardOpen] = useState(false);
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -78,18 +78,9 @@ const Landing = () => {
               Answer 7 quick questions. We write the script and generate your video with Captions.ai. No editing required.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+            <div className="flex justify-center mb-6">
               <Button size="lg" onClick={handleCreateAd} className="text-lg px-8 py-4">
                 Create Your Ad <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                onClick={() => setDemoModalOpen(true)}
-                className="text-lg px-8 py-4"
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Watch 30-sec Demo
               </Button>
             </div>
             
@@ -188,21 +179,6 @@ const Landing = () => {
       {/* Ad Wizard Modal */}
       <AdWizardModal open={adWizardOpen} onOpenChange={setAdWizardOpen} />
 
-      {/* Demo Modal */}
-      <Dialog open={demoModalOpen} onOpenChange={setDemoModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>30-Second Demo</DialogTitle>
-          </DialogHeader>
-          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <Play className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Demo video placeholder</p>
-              <p className="text-sm text-muted-foreground mt-2">https://demo.example</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
