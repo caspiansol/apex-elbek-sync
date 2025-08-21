@@ -266,7 +266,11 @@ Write as one continuous, engaging script without section labels or formatting. M
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Try to get more detailed error from the response
+        const errorMessage = data?.error || error.message || "Failed to create video";
+        throw new Error(errorMessage);
+      }
 
       toast({
         title: "Rendering Started!",

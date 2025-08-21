@@ -108,7 +108,9 @@ const Library = () => {
       });
 
       if (error) {
-        throw new Error(error.message);
+        // Try to get more detailed error from the response
+        const errorMessage = data?.error || error.message || "Failed to retry video creation";
+        throw new Error(errorMessage);
       }
 
       toast({
