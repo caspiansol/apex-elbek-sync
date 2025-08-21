@@ -1,5 +1,6 @@
 import { FEATURED_CREATORS, getPosterFor, getPreviewFor } from "@/data/featured_creators";
 import { Check } from "lucide-react";
+import VideoPreview from "@/components/wizard/VideoPreview";
 
 export function Step7Characters({ state, setState }: { state: any; setState: Function }) {
   const selected = state.selectedCreator as string | undefined;
@@ -29,17 +30,14 @@ export function Step7Characters({ state, setState }: { state: any; setState: Fun
               key={name}
               type="button"
               onClick={() => select(name)}
-              className={`relative rounded-xl border overflow-hidden text-left bg-card transition-all hover:scale-105
-                          ${selected === name ? "ring-2 ring-primary border-primary" : "border-border"}`}
+              className={`relative rounded-xl border bg-card text-left overflow-hidden transition-all hover:scale-105
+                          ${selected === name ? "border-primary ring-2 ring-primary" : "border-border"}`}
             >
-              <div className="aspect-video bg-muted">
-                <iframe
-                  src={getPreviewFor(name)}
-                  className="h-full w-full object-cover"
-                  allow="autoplay"
-                  frameBorder="0"
-                />
-              </div>
+              <VideoPreview
+                previewUrl={getPreviewFor(name)}
+                posterUrl={getPosterFor(name)}
+                selected={selected === name}
+              />
               <div className="p-3 text-sm font-medium">{name}</div>
               {selected === name && (
                 <div className="absolute top-2 right-2 rounded-full bg-primary text-primary-foreground p-1">
