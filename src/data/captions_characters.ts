@@ -4,42 +4,42 @@ export const SUPPORTED_CREATORS = [
   "Leah-1", "Madison-1", "Monica-1", "Violet-1"
 ];
 
-// Thumbnail data for preview
+// Real video previews from Google Drive
 export const THUMBNAILS: Record<string, { imageUrl: string; videoUrl: string }> = {
   "Alan-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/alan-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/alan-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1RF9dKmcjPdNpXS__WGv-plVqc1WV1tfB",
+    videoUrl: "https://drive.google.com/file/d/1RF9dKmcjPdNpXS__WGv-plVqc1WV1tfB/preview"
   },
   "Cam-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/cam-1.jpg", 
-    videoUrl: "https://cdn.captions.ai/previews/cam-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1pX1zc7JthBwqYtiSV5LM4_Hw7Llj47NS",
+    videoUrl: "https://drive.google.com/file/d/1pX1zc7JthBwqYtiSV5LM4_Hw7Llj47NS/preview"
   },
   "Carter-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/carter-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/carter-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1lQf7N6S5v2RnSvxhKhlnBitt_v2Rk0Kt",
+    videoUrl: "https://drive.google.com/file/d/1lQf7N6S5v2RnSvxhKhlnBitt_v2Rk0Kt/preview"
   },
   "Douglas-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/douglas-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/douglas-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1pq3z55igHaAGnzsTm9AWPhijeOpi0b1f",
+    videoUrl: "https://drive.google.com/file/d/1pq3z55igHaAGnzsTm9AWPhijeOpi0b1f/preview"
   },
   "Jason": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/jason.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/jason.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1odqVmHsGnUF6M2nQ8zn7oBHEwLLd0Fgn",
+    videoUrl: "https://drive.google.com/file/d/1odqVmHsGnUF6M2nQ8zn7oBHEwLLd0Fgn/preview"
   },
   "Leah-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/leah-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/leah-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1XONuP0SEWfdxbcT9dQjBO_eWzmrZcMk-",
+    videoUrl: "https://drive.google.com/file/d/1XONuP0SEWfdxbcT9dQjBO_eWzmrZcMk-/preview"
   },
   "Madison-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/madison-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/madison-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1g3yq2Z63r8MofeSmHvF1EWnVjLZH7rHm",
+    videoUrl: "https://drive.google.com/file/d/1g3yq2Z63r8MofeSmHvF1EWnVjLZH7rHm/preview"
   },
   "Monica-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/monica-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/monica-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1nHounF8SnIOgYFTa4N4pn2btIGW0uVLT",
+    videoUrl: "https://drive.google.com/file/d/1nHounF8SnIOgYFTa4N4pn2btIGW0uVLT/preview"
   },
   "Violet-1": {
-    imageUrl: "https://cdn.captions.ai/thumbnails/violet-1.jpg",
-    videoUrl: "https://cdn.captions.ai/previews/violet-1.mp4"
+    imageUrl: "https://drive.google.com/thumbnail?id=1VI8VX9-I2o9PLy90sr6Kr5PpqqAQQPZf",
+    videoUrl: "https://drive.google.com/file/d/1VI8VX9-I2o9PLy90sr6Kr5PpqqAQQPZf/preview"
   }
 };

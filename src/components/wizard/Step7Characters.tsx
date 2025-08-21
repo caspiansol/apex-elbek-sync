@@ -33,11 +33,11 @@ export function Step7Characters({ state, setState }: { state: any; setState: Fun
                           ${selected === name ? "ring-2 ring-primary border-primary" : "border-border"}`}
             >
               <div className="aspect-video bg-muted">
-                <video
+                <iframe
                   src={getPreviewFor(name)}
-                  poster={getPosterFor(name)}
                   className="h-full w-full object-cover"
-                  playsInline muted loop preload="metadata"
+                  allow="autoplay"
+                  frameBorder="0"
                 />
               </div>
               <div className="p-3 text-sm font-medium">{name}</div>
